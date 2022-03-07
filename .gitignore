@@ -5,8 +5,7 @@ __pycache__/
 # C extensions
 *.so
 
-# Video and run File
-Videos/
+# run File
 runs/
 
 # Distribution / packaging
