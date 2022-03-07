@@ -1,0 +1,39 @@
+Three theories
+1. the dqn algorithm with unsqueeze and stuff.
+2. the environment wrappers with _step.
+3. the network setup.
+
+
+
+tensorboard.
+Then onto next algortihms and expansion
+
+keep adding to diss writeup.
+
+Once dqn works:
+rewrite env wrappers
+rewrite network
+try old dqn algorithm
+Tidy.
+
+
+figure out expected sarsa and reinforce
+expected sarsa interesting one.
+
+have research written up.
+have some tensorboard charts. 
+
+
+settings which work well for dqn pong:
+{
+    "MEMORY_SIZE": 10000,
+    "REPLAY_MIN": 300,
+    "BATCH_SIZE": 32,
+    "LEARNING_RATE": 1e-4,
+    "EPSILON_START": 0.99,
+    "EPSILON_END": 0.02,
+    "EPSILON_DECAY": 0.999985,
+    "DISCOUNT": 0.99,
+    "TARGET_UPDATE": 1000
+}
+gets positive about 140 episodes. At 400 can win
