@@ -2,7 +2,8 @@ import random as rnd
 import numpy as np
 import torch
 
-class Agent():
+
+class Agent:
     def __init__(self, env):
         self.current_state = env.reset()
 

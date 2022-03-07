@@ -124,7 +124,7 @@ class DQN():
 
                 if frames % self.settings['TARGET_UPDATE'] == 0:
                     self.targetModel.load_state_dict(self.model.state_dict())
-                    torch.save(self.model.state_dict(), 'Project/Models/dqnWeights')
+                    torch.save(self.model.state_dict(), 'Models/dqnWeights')
 
             epReward = mean(reward_buf)
             writer.add_scalar('Total/Reward', epReward, eps)
@@ -290,7 +290,7 @@ class E_SARSA():
 
                 if frames % self.settings['TARGET_UPDATE'] == 0:
                     self.targetModel.load_state_dict(self.model.state_dict())
-                    torch.save(self.model.state_dict(), 'Project/Models/eSarsaWeights')
+                    torch.save(self.model.state_dict(), 'Models/eSarsaWeights')
 
             writer.add_scalar('Total/Reward', np.mean(reward_buf) , eps)
             writer.add_scalar('Total/Epsilon', self.epsilon, eps)

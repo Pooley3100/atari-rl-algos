@@ -11,12 +11,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 env = envWrapper.makeEnv('PongNoFrameskip-v4')
-env = Monitor(env, 'Project/Videos', force=True)
+env = Monitor(env, 'Videos', force=True)
 
 #Load Model
 #TODO: Select which model the network is built of.
 model = models.NeuralNetworkAdvanced(env.observation_space.shape, env.action_space.n).to(device)
-model.load_state_dict(torch.load('Project/Models/dqnWeights'))
+model.load_state_dict(torch.load('Models/dqnWeights'))
 
 current_state = env.reset()
 count = 0

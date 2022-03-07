@@ -7,7 +7,7 @@ import rlAlgorithms
 # TODO: Redo the venv installs, there are too many currently that are not needed
 # TODO: Change up settings, and how epsilon decay is done
 
-with open("Project/settings.json") as read_file:
+with open("settings.json") as read_file:
     settings = json.load(read_file)
 
 
@@ -73,7 +73,7 @@ else:
     # PPO Not so sure if I will do this one??
     pass
 
-torch.save(model.state_dict(), 'Project/Models/Weights{}'.format(rlOption))
+torch.save(model.state_dict(), 'Models/Weights{}'.format(rlOption))
 
 
 
