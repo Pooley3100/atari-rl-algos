@@ -398,3 +398,87 @@ class REINFORCE():
             if eps % 5 == 0:
                 print(mean(reward_buf))
                 print(eps)
+
+
+class A2C:
+    def __init__(self, model, env, settings, optim, device):
+        self.ActorCritic = model
+        self.env = env
+        self.settings = settings
+        self.agent = agent.Agent(self.env)
+        self.entropy_sum = 0
+        self.optimizer = optim
+        self.device = device
+
+    def play(self):
+        # Loop through epsiodes, every batch train
+        # TODO Add multiple workers for asynchronicity
+        # TODO change up baselines for this and REINFORCE
+        total_rewards = []
+
+        replay_mem = []
+        log_probs = []
+        values = []
+        ep_count = 0
+        for eps in range(100000000):
+            replay_mem, reward, done, env, value, action_probs, action = self.agent.step(self.env , True, self.ActorCritic, 0, self.device, replay_mem, self.settings['REPLAY_MIN'])
+            values.append(value.cpu().detach().numpy()[0, 0])
+            log_probs.append(torch.log(action_probs.squeeze(0))[action])
+
+            total_rewards.append(reward)
+
+            action_prob = action_probs.cpu().detach().numpy()
+            entropy = -np.sum(np.mean(action_prob) * np.log(action_prob))
+            self.entropy_sum += entropy
+
+            if done or (eps % self.settings['BATCH_SIZE'] == 0):
+                self.train(replay_mem, log_probs, values)
+
+                replay_mem = []
+                log_probs = []
+                values = []
+                # Logging (temporary I guess)
+                if done:
+                    ep_count += 1
+                    print(np.mean(total_rewards))
+                    print(ep_count)
+                    total_rewards = []
+
+    def train(self, replay_mem, log_probs, values):
+        q_vals = np.zeros_like(values)
+        rewards = np.array([transition[2] for transition in replay_mem])
+        dones = np.array([transition[4] for transition in replay_mem])
+        future_states = np.array([transition[3] for transition in replay_mem])
+        future_states = torch.tensor(future_states).to(self.device)
+
+        # Find Q_Values with Discounted Rewards
+        if dones[-1]:
+            q_val = rewards[-1]
+            q_val = torch.FloatTensor(np.atleast_2d(q_val))
+        else:
+            _, q_val = self.ActorCritic(future_states[-1].unsqueeze(0))
+
+        for i in range(len(replay_mem)):
+            # TODO Done Mask
+            q_val = rewards[i] * q_val * self.settings['DISCOUNT']
+            q_vals[i] = q_val.cpu().detach().numpy()
+
+        # Convert values, q values and log to tensor to allow loss calculation
+        # q_vals = torch.tensor(q_vals, dtype=torch.float32).to(self.device)
+        q_vals = torch.FloatTensor(q_vals).to(self.device)
+        values = torch.tensor(values, dtype=torch.float32).to(self.device)
+        log_probs = torch.stack(log_probs).to(self.device)
+
+        # Now the loss equation = Total Loss = Action Loss + Value Loss - Entropy
+        advantage = q_vals - values
+        action_loss = (-log_probs * advantage).mean()
+        value_loss = 0.6 * advantage.pow(2).mean()
+        total_loss = action_loss + value_loss + 0.001 * self.entropy_sum
+
+        self.optimizer.zero_grad()
+        total_loss.backward()
+        self.optimizer.step()
+
+
+
+

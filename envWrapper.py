@@ -3,8 +3,7 @@ import gym
 import collections
 import numpy as np
 
-#TODO: Rewrite Each wrapper
-#TODO: use really good article to help
+#TODO: Rewrite Each wrapper, use really good article to help and allow different games to be wrapped
 #Frame Skip from stack 
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):

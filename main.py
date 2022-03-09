@@ -4,6 +4,8 @@ import envWrapper
 import models
 import rlAlgorithms
 
+
+
 # TODO: Redo the venv installs, there are too many currently that are not needed
 # TODO: Change up settings, and how epsilon decay is done
 
@@ -46,7 +48,7 @@ model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 #Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 2
+rlOption = 4
 if rlOption == 1:
     # DQN
     print('Training DQN')
@@ -69,9 +71,16 @@ elif rlOption == 3:
     # REINFORCE
     print('Training REINFORCE')
     pass
-else:
-    # PPO Not so sure if I will do this one??
-    pass
+elif rlOption == 4:
+    # A2C
+    print('Training A2C')
+    # TODO Potentially multiple workers with different envs, provides
+    # Redo these declerations as requires different network
+    model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
+    a2c = rlAlgorithms.A2C(model, env, settings, optimizer, device)
+
+    a2c.play()
 
 torch.save(model.state_dict(), 'Models/Weights{}'.format(rlOption))
 

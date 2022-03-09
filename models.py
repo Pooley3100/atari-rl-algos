@@ -86,3 +86,41 @@ class PolicyNetwork(nn.Module):
     def predict(self, state):
         action_probs = self.network(torch.FloatTensor(state))
         return action_probs
+
+
+class ActorCriticNetwork(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(ActorCriticNetwork, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.critic = nn.Sequential(torch.nn.Linear(conv_out_size, 512),
+                                    torch.nn.ReLU(),
+                                    torch.nn.Linear(512, 1))
+
+        self.actor = nn.Sequential(torch.nn.Linear(conv_out_size, 512),
+                                   torch.nn.ReLU(),
+                                   torch.nn.Linear(512, n_actions),
+                                   torch.nn.Softmax(dim=-1))
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, state):
+        x = self.conv(state).view(state.size()[0], -1)
+        value = self.critic(x)
+
+        prob_dist = self.actor(x)
+
+        return prob_dist, value
+
+
+
