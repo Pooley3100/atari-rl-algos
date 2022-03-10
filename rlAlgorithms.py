@@ -7,7 +7,9 @@ import agent
 from statistics import mean
 
 from torch.utils.tensorboard import SummaryWriter
+
 writer = SummaryWriter()
+
 
 class DQN():
     def __init__(self, model, env, targetModel, optimizer, settings, device) -> None:
@@ -34,16 +36,16 @@ class DQN():
     now train with this. 
     '''
 
-    #TODO: Seperate training file for each algorithm
-    #TODO: DQN algorithm see why previous method did not work
-    #TODO: alternate ways to calculate dqn
+    # TODO: Seperate training file for each algorithm
+    # TODO: DQN algorithm see why previous method did not work
+    # TODO: alternate ways to calculate dqn
     def train_DQN(self):
         if len(self.replay_mem) < self.settings['REPLAY_MIN']:
             return False
         # Train works with batch size
         batch = random.sample(self.replay_mem, self.settings['BATCH_SIZE'])
 
-        #Get individual transition from batched replay memory
+        # Get individual transition from batched replay memory
         current_states = np.array([transition[0] for transition in batch])
         actions = np.array([transition[1] for transition in batch])
         rewards = np.array([transition[2] for transition in batch])
@@ -53,9 +55,9 @@ class DQN():
         # Convert to tensor from numpy (supposedly this is faster?)
         # unsqueeze -1 converts 1d arrays to 2d array, (i.e. [3] to [3,1])
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
-        actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)    
-        #rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)        
-        #dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
+        actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
+        # rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)
+        # dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         dones_t = torch.ByteTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
@@ -66,13 +68,13 @@ class DQN():
         # then squeeze to make tensor 1d again, giving list of q values for each action
         state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
 
-        #Now send next states to target model, get action values, find max value and just take that
-        #Dim 0 is batch
+        # Now send next states to target model, get action values, find max value and just take that
+        # Dim 0 is batch
         future_qs = self.targetModel(fstate_t)
         max_future_qs = future_qs.max(1)[0]
 
         # One trick for dones
-        #targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
+        # targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
         # Another
         max_future_qs[dones_t] = 0.0
         max_future_qs = max_future_qs.detach()
@@ -100,23 +102,25 @@ class DQN():
             self.eps = eps
 
             while not done:
-                frames+=1
+                frames += 1
                 self.frames = frames
                 # TODO: Different way of doing this 
                 # TODO: alternate epsilon methods for non approximation
-                if(len(self.replay_mem) > self.settings['REPLAY_MIN']):
-                    epsilon = max(epsilon*self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
+                if (len(self.replay_mem) > self.settings['REPLAY_MIN']):
+                    epsilon = max(epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
 
                 if eps % 100 == 0:
                     self.env.render()
 
                 # TODO: Calculate whether using approximate methods or not
                 approximate = False
-                
-                self.replay_mem, reward, done, self.env = self.agent.step(self.env, approximate, self.model, epsilon, self.device, self.replay_mem, self.settings['REPLAY_MIN'])
-                
-                #Train method
-                
+
+                self.replay_mem, reward, done, self.env, _, _, _ = self.agent.step(self.env, approximate, self.model, epsilon,
+                                                                          self.device, self.replay_mem,
+                                                                          self.settings['REPLAY_MIN'])
+
+                # Train method
+
                 self.train_DQN()
 
                 reward_buf.append(reward)
@@ -136,8 +140,6 @@ class DQN():
                 print(eps)
                 writer.flush()
 
-class PPO():
-    pass
 
 class E_SARSA():
     def __init__(self, model, env, targetModel, optimizer, settings, device) -> None:
@@ -159,7 +161,7 @@ class E_SARSA():
         # Train works with batch size
         batch = random.sample(self.replay_mem, self.settings['BATCH_SIZE'])
 
-        #Get individual transition from batched replay memory
+        # Get individual transition from batched replay memory
         current_states = np.array([transition[0] for transition in batch])
         actions = np.array([transition[1] for transition in batch])
         rewards = np.array([transition[2] for transition in batch])
@@ -169,81 +171,81 @@ class E_SARSA():
         # Convert to tensor from numpy (supposedly this is faster?)
         # unsqueeze -1 converts 1d arrays to 2d array, (i.e. [3] to [3,1])
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
-        actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)    
-        #rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)        
-        #dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
+        actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
+        # rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)
+        # dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         dones_t = torch.LongTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
 
         # One method
-        # # This is predict
-        # state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
-        # #state_action_qs = self.model(state_t).cpu().detach().numpy()
-        # #state_action_qs = self.model(state_t)
-        # # Calculate number of greedy actions
-        
-        # future_qs = self.targetModel(fstate_t)
+        # This is predict
+        state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
+        # state_action_qs = self.model(state_t).cpu().detach().numpy()
+        # state_action_qs = self.model(state_t)
+        # Calculate number of greedy actions
 
-        # expected_q = np.ones(future_qs.shape[0])
-        # max_future_qs = torch.sort(future_qs,dim=1,descending=True)[0].cpu().detach()
-        # greedy_actions = np.ones(future_qs.shape[0])
+        future_qs = self.targetModel(fstate_t)
 
-        # future_max_qs_num = np.array(max_future_qs)
-        # future_qs_num = future_qs.cpu().detach().numpy()
-        # for i in range(future_qs_num.shape[0]):
-        #     col = 0
-        #     while future_max_qs_num[i][col] == future_max_qs_num[i][col+1]:
-        #         greedy_actions[i]+=1
-        #         col+=1
-        #     continue
+        expected_q = np.ones(future_qs.shape[0])
+        max_future_qs = torch.sort(future_qs, dim=1, descending=True)[0].cpu().detach()
+        greedy_actions = np.ones(future_qs.shape[0])
 
+        future_max_qs_num = np.array(max_future_qs)
+        future_qs_num = future_qs.cpu().detach().numpy()
+        for i in range(future_qs_num.shape[0]):
+            col = 0
+            while future_max_qs_num[i][col] == future_max_qs_num[i][col + 1]:
+                greedy_actions[i] += 1
+                col += 1
+            continue
 
-        # # Action probabilites
+        # Action probabilites
         # non_greedy_action_probability = self.epsilon / self.env.action_space.n
         # greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
+        greedy_action_probability = (1 - self.epsilon)
+        non_greedy_action_probability = self.epsilon
 
-        # for i, x in enumerate(future_qs_num):
-        #     for j in range(self.env.action_space.n):
-        #         if future_qs_num[i][j] == max_future_qs[i][0]:
-        #             #test = future_qs_num[i][j] * greedy_action_probability
-        #             #test1 = future_qs_num[i][j]
-        #             expected_q[i] += future_qs_num[i][j] * greedy_action_probability[i]
-        #         else:
-        #             expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
+        for i, x in enumerate(future_qs_num):
+            for j in range(self.env.action_space.n):
+                if future_qs_num[i][j] == max_future_qs[i][0]:
+                    # test = future_qs_num[i][j] * greedy_action_probability
+                    # test1 = future_qs_num[i][j]
+                    expected_q[i] += future_qs_num[i][j] * greedy_action_probability
+                else:
+                    expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
 
-        # expected_q = torch.tensor(expected_q, dtype=torch.float32).to(self.device)
-        
-        # expected_q[dones_t] = 0.0
-        # targets = rewards_t + self.settings['DISCOUNT'] * expected_q
-        
+        expected_q = torch.tensor(expected_q, dtype=torch.float32).to(self.device)
+
+        expected_q[dones_t] = 0.0
+        targets = rewards_t + self.settings['DISCOUNT'] * expected_q
+
         # loss = F.smooth_l1_loss(state_action_qs, targets)
 
         # One method <<<<<<<<<<<<<,
 
-        # Now get predicted state action values for all states, 
+        # Now get predicted state action values for all states,
         # send state to network to get values for each action
         # gather along columns to get predicted q values for each action in the batch
         # then squeeze to make tensor 1d again, giving list of q values for each action
-        state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
+        # state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
 
-        #Now send next states to target model, get action values, find max value and just take that
-        #Dim 0 is batch
-        future_qs = self.targetModel(fstate_t)
-        mean_qs = future_qs.mean(1)
+        # Now send next states to target model, get action values, find max value and just take that
+        # Dim 0 is batch
+        # future_qs = self.targetModel(fstate_t)
+        # mean_qs = future_qs.mean(1)
 
         # One trick for dones
-        #targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
+        # targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
         # Another
-        mean_qs[dones_t] = 0.0
-        mean_qs = mean_qs.detach()
-        targets = mean_qs * self.settings['DISCOUNT'] + rewards_t
+        # mean_qs[dones_t] = 0.0
+        # mean_qs = mean_qs.detach()
+        # targets = mean_qs * self.settings['DISCOUNT'] + rewards_t
 
         # action_q_values = torch.gather(input=current_qs, dim=1, index=actions_t)
 
         # TODO different loss functions
         # loss = F.smooth_l1_loss(state_action_qs, targets)
-        
 
         # calculate if action is greddy or if action is non greedy, then act upon that information
 
@@ -258,7 +260,7 @@ class E_SARSA():
         self.optimizer.step()
 
         return True
-    
+
     def play(self):
         self.epsilon = self.settings['EPSILON_START']
         reward_buf = collections.deque(maxlen=10000)
@@ -268,22 +270,25 @@ class E_SARSA():
             reward_buf.clear()
 
             while not done:
-                frames+=1
+                frames += 1
                 # TODO: Different way of doing this 
                 # TODO: alternate epsilon methods for non approximation
-                if(len(self.replay_mem) > self.settings['REPLAY_MIN']):
-                    self.epsilon = max(self.epsilon*self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
+                if (len(self.replay_mem) > self.settings['REPLAY_MIN']):
+                    self.epsilon = max(self.epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
 
                 if eps % 100 == 0:
                     self.env.render()
 
                 # TODO: Calculate whether using approximate methods or not
                 approximate = False
-                
-                self.replay_mem, reward, done, self.env = self.agent.step(self.env, approximate, self.model, self.epsilon, self.device, self.replay_mem, self.settings['REPLAY_MIN'])
-                
-                #Train method
-                
+
+                self.replay_mem, reward, done, self.env, _, _, _ = self.agent.step(self.env, approximate, self.model,
+                                                                                   self.epsilon, self.device,
+                                                                                   self.replay_mem,
+                                                                                   self.settings['REPLAY_MIN'])
+
+                # Train method
+
                 self.train_E_SARSA()
 
                 reward_buf.append(reward)
@@ -292,9 +297,8 @@ class E_SARSA():
                     self.targetModel.load_state_dict(self.model.state_dict())
                     torch.save(self.model.state_dict(), 'Models/eSarsaWeights')
 
-            writer.add_scalar('Total/Reward', np.mean(reward_buf) , eps)
+            writer.add_scalar('Total/Reward', np.mean(reward_buf), eps)
             writer.add_scalar('Total/Epsilon', self.epsilon, eps)
-
 
             # Current logging
             if eps % 5 == 0:
@@ -303,58 +307,63 @@ class E_SARSA():
                 print('Epsilon', self.epsilon)
                 writer.flush()
 
-class REINFORCE():
-    def __init__(self, model, env, optimizer, settings) -> None:
+
+class REINFORCE:
+    def __init__(self, model, env, optimizer, settings, device) -> None:
         self.model = model
         self.env = env
         self.optimizer = optimizer
         self.batched_mem = []
         self.settings = settings
+        self.device = device
+        self.agent = agent.Agent(self.env)
+        self.replay_mem = []
 
     # TODO: Alternate methods for calculating reinforce method.
-    #Now for training if using REINFORCE METHOD
-    #This is called end of each episode
+    # Now for training if using REINFORCE METHOD
+    # This is called end of each episode
     def reinforce_train(self, model, discount_rewards):
-        # Discounted rewards:
-            
-        #Get individual transition from batched replay memory
-        current_states = np.array([transition[0] for transition in batched_mem])
-        actions = np.array([transition[1] for transition in batched_mem])
-        # dones = np.array([transition[4] for transition in replay_mem])
+        # Get individual transition from batched replay memory
+        current_states = np.array([transition[0] for transition in self.batched_mem])
+        actions = np.array([transition[1] for transition in self.batched_mem])
 
-        current_states_t = torch.tensor(current_states, dtype=torch.float32).to(device)
-        actions_t = torch.tensor(actions, dtype=torch.long).unsqueeze(-1).to(device)
-        discount_rewards_t = torch.tensor(discount_rewards, device=device)
+        current_states_t = torch.tensor(current_states, dtype=torch.float32).to(self.device)
+        actions_t = torch.tensor(actions, dtype=torch.long).unsqueeze(-1).to(self.device)
 
         # TODO Softmax not currently used, or option in some networks
-        log_loss = torch.log(model(current_states_t))
-        test = torch.gather(log_loss, 1, actions_t).squeeze()
-        loss = discount_rewards_t * torch.gather(log_loss, 1, actions_t).squeeze()
-        loss = -loss.mean()
-    
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        action_probs, _ = model(current_states_t)
+        log_probs = []
+        for i in range(action_probs.shape[0]):
+            action_prob_max = np.random.choice(self.env.action_space.n, p=np.squeeze(action_probs[i].cpu().detach().numpy()))
+            log_prob = torch.log(action_probs[i][action_prob_max])
+            log_probs.append(log_prob)
 
+        log_probs = torch.stack(log_probs).to(self.device)
+
+        loss = []
+        for prob, discount in zip(log_probs, discount_rewards):
+            loss.append(-prob * discount)
+
+        loss = torch.stack(loss).sum()
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
         return True
 
     def calc_discount(self, replay_mem):
         rewards = np.array([transition[2] for transition in replay_mem])
-        # TODO: Change how this is done
-        
-        # for i in range(len(rewards)):
-        
-        #     discount_rewards.append(DISCOUNT**i * rewards[i])    
-
-        # return discount_rewards
-        r = np.array([DISCOUNT**i * rewards[i] 
-            for i in range(len(rewards))])
-        # Reverse the array direction for cumsum and then
-        # revert back to the original order
-        r = r[::-1].cumsum()[::-1]
-        result = r - r.mean()
-        return (result)
+        discount_rewards = []
+        for i in range(len(rewards)):
+            discount = 0
+            gamma = 0
+            for j in rewards[i:]:
+                discount = discount + self.settings['DISCOUNT']**gamma * j
+                gamma += 1
+            discount_rewards.append(discount)
+        # TODO some baselien can be added here
+        discount_rewards = torch.tensor(discount_rewards).to(self.device)
+        return discount_rewards
 
     # discont rewards need to be calculated, only once episode done, this is batched rewards
     # single policy estimator used in the nework
@@ -365,34 +374,29 @@ class REINFORCE():
     def play(self):
         discount_rewards = []
         reward_buf = collections.deque(maxlen=10000)
-        batch = 0
-        agent = agent.Agent(env)
+
         for eps in range(1000):
             done = False
             reward_buf.clear()
 
             while not done:
-
                 if eps % 100 == 0:
-                    env.render()
-                
-                approximate = True
-                replay_mem, reward, done, env = agent.step(env, approximate, model, epsilon, device, replay_mem, REPLAY_MIN)
+                    self.env.render()
+
+                self.replay_mem, reward, done, self.env, _, _, action = self.agent.step(self.env, True, self.model, None, self.device, self.replay_mem,
+                                                           self.settings['REPLAY_MIN'])
 
                 if done:
-                    batch += 1
-                    discount_rewards.extend(self.calc_discount(replay_mem))
-                    batched_mem.extend(replay_mem)
-                    replay_mem.clear()
-                    if batch == BATCH_SIZE:
-                        self.reinforce_train(model, discount_rewards)
-                        # Clear Memory once update done
-                        discount_rewards = []
-                        batched_mem = []
-                
+                    discount_rewards = (self.calc_discount(self.replay_mem))
+                    self.batched_mem.extend(self.replay_mem)
+                    self.replay_mem.clear()
+
+                    self.reinforce_train(self.model, discount_rewards)
+                    # Clear Memory once update done
+                    discount_rewards = []
+                    self.batched_mem = []
 
                 reward_buf.append(reward)
-
 
             # Current logging
             if eps % 5 == 0:
@@ -421,7 +425,10 @@ class A2C:
         values = []
         ep_count = 0
         for eps in range(100000000):
-            replay_mem, reward, done, env, value, action_probs, action = self.agent.step(self.env , True, self.ActorCritic, 0, self.device, replay_mem, self.settings['REPLAY_MIN'])
+            replay_mem, reward, done, env, value, action_probs, action = self.agent.step(self.env, True,
+                                                                                         self.ActorCritic, 0,
+                                                                                         self.device, replay_mem,
+                                                                                         self.settings['REPLAY_MIN'])
             values.append(value.cpu().detach().numpy()[0, 0])
             log_probs.append(torch.log(action_probs.squeeze(0))[action])
 
@@ -478,7 +485,3 @@ class A2C:
         self.optimizer.zero_grad()
         total_loss.backward()
         self.optimizer.step()
-
-
-
-

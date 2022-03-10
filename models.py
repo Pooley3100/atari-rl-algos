@@ -31,7 +31,8 @@ class NeuralNetworkBasic(nn.Module):
         x = F.relu(self.fc2(x))
         # print(x.shape)
         return x
-        
+
+
 class NeuralNetworkAdvanced(nn.Module):
     def __init__(self, input_shape, n_actions):
         super(NeuralNetworkAdvanced, self).__init__()
@@ -67,6 +68,37 @@ class NeuralNetworkAdvanced(nn.Module):
     #     # state_t = torch.permute(state_t, (2, 1, 0))
     #     q_values = model.forward(state_t[None, ...])  # None removes batch for time being
     #     return q_values
+
+
+class PolicyNeuralNetworkAdvanced(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(PolicyNeuralNetworkAdvanced, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc = nn.Sequential(
+            # was 512
+            nn.Linear(conv_out_size, 100),
+            nn.ReLU(),
+            nn.Linear(100, n_actions),
+            nn.Softmax(dim=-1)
+        )
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        conv_out = self.conv(x).view(x.size()[0], -1)
+        return self.fc(conv_out), None
 
 # TODO Change this
 class PolicyNetwork(nn.Module):

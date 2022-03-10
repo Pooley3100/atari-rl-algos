@@ -70,7 +70,11 @@ elif rlOption == 2:
 elif rlOption == 3:
     # REINFORCE
     print('Training REINFORCE')
-    pass
+    model = models.PolicyNeuralNetworkAdvanced(in_channels, out_channels).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
+    reinforce = rlAlgorithms.REINFORCE(model, env, optimizer, settings, device)
+    reinforce.play()
+
 elif rlOption == 4:
     # A2C
     print('Training A2C')

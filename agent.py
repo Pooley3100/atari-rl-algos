@@ -19,7 +19,9 @@ class Agent:
 
         else:
             # Epsilon used and replay memory must be filled else random action
-            random = rnd.uniform(0,1)
+            random = rnd.uniform(0, 1)
+            value = None
+            action_probs = None
             if random <= epsilon or len(replay_mem) < REPLAY_MIN:
                 action = env.action_space.sample()
             else:
@@ -36,7 +38,7 @@ class Agent:
 
         if done:
             # Draw neural network
-            make_dot(action_probs, params=dict(list(model.named_parameters()))).render("rnn_torchviz", format="png")
+            # make_dot(action_probs, params=dict(list(model.named_parameters()))).render("rnn_torchviz", format="png")
 
             self.current_state = env.reset()
 
