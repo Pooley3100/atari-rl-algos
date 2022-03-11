@@ -14,10 +14,10 @@ class Agent:
             current_state_a = np.array([self.current_state], copy=False)
             current_state_t = torch.tensor(current_state_a).to(device)
             # Action probabilities
-            action_probs, value = model(current_state_t) # TODO: REINFORCE will not return value (critic)
+            action_probs, value= model(current_state_t) # TODO: REINFORCE will not return value (critic)
             action_probs_n = action_probs.cpu().detach().numpy()
             action = np.random.choice(env.action_space.n, p=action_probs_n.squeeze(0))
-
+            log_prob = torch.log(action_probs.squeeze(0)[action]).cpu()
         else:
             # Epsilon used and replay memory must be filled else random action
             random = rnd.uniform(0, 1)
@@ -32,7 +32,10 @@ class Agent:
                 action = int(action.item())
 
         new_state, reward, done, _ = env.step(action)
-        transition = (self.current_state, action, reward, new_state, done)
+        if not approximate:
+            transition = (self.current_state, action, reward, new_state, done)
+        else:
+            transition = (self.current_state, action, reward, new_state, done, log_prob)
         replay_mem.append(transition)
 
         self.current_state = new_state

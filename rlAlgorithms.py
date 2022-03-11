@@ -331,21 +331,23 @@ class REINFORCE:
 
         # TODO Softmax not currently used, or option in some networks
         action_probs, _ = model(current_states_t)
-        log_probs = []
-        for i in range(action_probs.shape[0]):
-            action_prob_max = np.random.choice(self.env.action_space.n, p=np.squeeze(action_probs[i].cpu().detach().numpy()))
-            log_prob = torch.log(action_probs[i][action_prob_max])
-            log_probs.append(log_prob)
+        log_probs = torch.stack([transition[5] for transition in self.batched_mem]).to(self.device)
+        # log_probs = torch.tensor(log_probs, dtype=torch.float32).to(self.device)
+        # for i in range(action_probs.shape[0]):
+        #     action_prob_max = np.random.choice(self.env.action_space.n, p=np.squeeze(action_probs[i].cpu().detach().numpy()))
+        #     log_prob = torch.log(action_probs[i][action_prob_max])
+        #     log_probs.append(log_prob)
 
-        log_probs = torch.stack(log_probs).to(self.device)
+        # log_probs = torch.stack(log_probs).to(self.device)
 
         loss = []
-        for prob, discount in zip(log_probs, discount_rewards):
-            loss.append(-prob * discount)
+        # for prob, discount in zip(log_probs, discount_rewards):
+        #     loss.append(-prob * discount)
+        policy_gradient = -log_probs * discount_rewards
 
-        loss = torch.stack(loss).sum()
+        #policy_gradient = torch.stack(policy_gradient).sum()
         self.optimizer.zero_grad()
-        loss.backward()
+        policy_gradient.sum().backward()
         self.optimizer.step()
 
         return True
@@ -379,12 +381,12 @@ class REINFORCE:
         discount_rewards = []
         reward_buf = collections.deque(maxlen=10000)
 
-        for eps in range(1000):
+        for eps in range(3000):
             done = False
             reward_buf.clear()
 
             while not done:
-                if eps % 100 == 0:
+                if eps % 50 == 0:
                     self.env.render()
 
                 self.replay_mem, reward, done, self.env, _, _, action = self.agent.step(self.env, True, self.model, None, self.device, self.replay_mem,

@@ -32,6 +32,23 @@ class NeuralNetworkBasic(nn.Module):
         # print(x.shape)
         return x
 
+# Used to test that REINFORCE actually works, but only on CartPole environment, however rather basic.
+class PolicyNeuralNetworkBasic(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(PolicyNeuralNetworkBasic, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(in_channels[0], 512),
+            nn.ReLU(),
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Linear(128, out_channels),
+            nn.Softmax(dim=-1)
+        )
+
+    def forward(self, state):
+        action_probs = self.fc(state.view(state.size()[0], -1))
+        return action_probs, None
+
 
 class NeuralNetworkAdvanced(nn.Module):
     def __init__(self, input_shape, n_actions):
@@ -55,6 +72,7 @@ class NeuralNetworkAdvanced(nn.Module):
             # nn.Softmax(dim=-1)
         )
 
+    # TODO: Don't Quite Like how i do this <<<<
     def _get_conv_out(self, shape):
         o = self.conv(torch.zeros(1, *shape))
         return int(np.prod(o.size()))

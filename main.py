@@ -1,4 +1,6 @@
 import json
+
+import gym
 import torch
 import envWrapper
 import models
@@ -28,6 +30,10 @@ model to train and target to predict
 
 
 # SETUP ENVIRONMENT, SELECT GAME TO TRAIN ON HERE
+
+# Non atari environment
+lunar_lander = 'LunarLander-v2'
+# env = gym.make(lunar_lander)
 
 # MsPacman-v5, Breakout-v5
 # render_mode='human' for watching.
@@ -71,6 +77,7 @@ elif rlOption == 3:
     # REINFORCE
     print('Training REINFORCE')
     model = models.PolicyNeuralNetworkAdvanced(in_channels, out_channels).to(device)
+    # model = models.PolicyNeuralNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
     reinforce = rlAlgorithms.REINFORCE(model, env, optimizer, settings, device)
     reinforce.play()
