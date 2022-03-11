@@ -3,9 +3,9 @@ import gym
 import collections
 import numpy as np
 
-#TODO: Rewrite Each wrapper, use really good article to help and allow different games to be wrapped
-#Frame Skip from stack
-# Currently based in part on stable baselines !!!
+# TODO: Rewrite Each wrapper, use really good article to help and allow different games to be wrapped
+# Coded with help from book 'Deep Reinforcement Learning Hands On' and then Stable Baselines common atari wrappers
+# Presses Fire button if required for game to start
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
         super(FireResetEnv, self).__init__(env)
@@ -69,15 +69,18 @@ class ProcessFrame84(gym.ObservationWrapper):
             img = np.reshape(frame, [250, 160, 3]).astype(np.float32)
         else:
             assert False, "Unknown resolution."
+        # Gray scale
         img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+        # CV2 resize takes in img and desired size. INTER AREA is resampling using pixel area relation. Can try INTER NEAREST.
         resized_screen = cv2.resize(img, (84, 110), interpolation=cv2.INTER_AREA)
+        # Not sure
         x_t = resized_screen[18:102, :]
         x_t = np.reshape(x_t, [84, 84, 1])
         return x_t.astype(np.uint8)
 
 # Stack frames to show action
 class BufferWrapper(gym.ObservationWrapper):
-    def __init__(self, env, n_steps, dtype=np.float32):
+    def __init__(self, env, n_steps=4, dtype=np.float32):
         super(BufferWrapper, self).__init__(env)
         self.dtype = dtype
         old_space = env.observation_space
@@ -94,11 +97,12 @@ class BufferWrapper(gym.ObservationWrapper):
         return self.buffer
 
 # BATCH CHANNEL HEIGHT WITH TO BATCH WIDTH HEIGHT CHANNEL
-# convert to BCHW from BWHC 
+# convert to BCWH from BWHC
 class ImageToPyTorch(gym.ObservationWrapper):
     def __init__(self, env):
         super(ImageToPyTorch, self).__init__(env)
         old_shape = self.observation_space.shape
+        # Show that shape W and C are swapped
         self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(old_shape[-1], 
                                 old_shape[0], old_shape[1]), dtype=np.float32)
 
@@ -112,7 +116,7 @@ class ScaledFloatFrame(gym.ObservationWrapper):
         return np.array(obs).astype(np.float32) / 255.0
 
 def makeEnv(ENV_NAME):
-    env = gym.make('PongNoFrameskip-v4')
+    env = gym.make(ENV_NAME)
     env = MaxAndSkipEnv(env)
     env = FireResetEnv(env)
     env = ProcessFrame84(env)

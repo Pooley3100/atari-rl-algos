@@ -360,7 +360,12 @@ class REINFORCE:
                 discount = discount + self.settings['DISCOUNT']**gamma * j
                 gamma += 1
             discount_rewards.append(discount)
-        # TODO some baselien can be added here
+
+        # TODO some baseliene can be added here
+        discount_rewards = np.array(discount_rewards).astype(np.float32)
+        discount_rewards = (discount_rewards - discount_rewards.mean()) / (discount_rewards.std() + 1e-9)
+        ## Trial <<< TODO Found on github chris yoon as a way to stabelise and normalise
+
         discount_rewards = torch.tensor(discount_rewards).to(self.device)
         return discount_rewards
 
@@ -397,10 +402,13 @@ class REINFORCE:
 
                 reward_buf.append(reward)
 
+            writer.add_scalar('Total/Reward', np.mean(reward_buf), eps)
+
             # Current logging
             if eps % 5 == 0:
                 print(mean(reward_buf))
                 print(eps)
+                writer.flush()
 
 
 class A2C:

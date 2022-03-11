@@ -12,7 +12,7 @@ import rlAlgorithms
 with open("settings.json") as read_file:
     settings = json.load(read_file)
 
-
+# Tale advantage of gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -32,7 +32,9 @@ model to train and target to predict
 # MsPacman-v5, Breakout-v5
 # render_mode='human' for watching.
 # env = gym.make('ALE/Breakout-v5', render_mode='human')
-env = envWrapper.makeEnv('PongNoFrameskip-v4')
+pong = 'PongNoFrameskip-v4'
+breakout = 'BreakoutNoFrameskip-v4'
+env = envWrapper.makeEnv(pong)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
@@ -40,15 +42,13 @@ out_channels = env.action_space.n
 print("out channels", out_channels)
 print("in channels", in_channels)
 
-
 # Model
-# TODO Softmax currently implemented
 model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 
-#Optimizer
+# Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 2
+rlOption = 3
 if rlOption == 1:
     # DQN
     print('Training DQN')
