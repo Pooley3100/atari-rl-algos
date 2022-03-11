@@ -40,7 +40,8 @@ lunar_lander = 'LunarLander-v2'
 # env = gym.make('ALE/Breakout-v5', render_mode='human')
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
-env = envWrapper.makeEnv(pong)
+space_invaders = 'SpaceInvadersNoFrameskip-v0'
+env = envWrapper.makeEnv(space_invaders)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
