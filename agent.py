@@ -14,7 +14,7 @@ class Agent:
             current_state_a = np.array([self.current_state], copy=False)
             current_state_t = torch.tensor(current_state_a).to(device)
             # Action probabilities
-            action_probs, value= model(current_state_t) # TODO: REINFORCE will not return value (critic)
+            action_probs, value = model(current_state_t) # TODO: REINFORCE will not return value (critic)
             action_probs_n = action_probs.cpu().detach().numpy()
             action = np.random.choice(env.action_space.n, p=action_probs_n.squeeze(0))
             log_prob = torch.log(action_probs.squeeze(0)[action]).cpu()

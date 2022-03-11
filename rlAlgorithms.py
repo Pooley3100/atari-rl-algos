@@ -440,8 +440,9 @@ class A2C:
                                                                                          self.ActorCritic, 0,
                                                                                          self.device, replay_mem,
                                                                                          self.settings['REPLAY_MIN'])
-            values.append(value.cpu().detach().numpy()[0, 0])
-            log_probs.append(torch.log(action_probs.squeeze(0))[action])
+            # values.append(value.cpu().detach().numpy()[0, 0])
+            values.append(value)
+            # log_probs.append(torch.log(action_probs.squeeze(0))[action])
 
             total_rewards.append(reward)
 
@@ -469,6 +470,7 @@ class A2C:
         future_states = np.array([transition[3] for transition in replay_mem])
         future_states = torch.tensor(future_states).to(self.device)
         rewards = torch.tensor(rewards).to(self.device)
+        log_probs = torch.stack([transition[5] for transition in replay_mem]).to(self.device)
 
         # Find Q_Values with Discounted Rewards
         if dones[-1]:
@@ -490,8 +492,9 @@ class A2C:
         # Convert values, q values and log to tensor to allow loss calculation
         # q_vals = torch.tensor(q_vals, dtype=torch.float32).to(self.device)
         # q_vals = torch.FloatTensor(q_vals).to(self.device)
-        values = torch.tensor(values, dtype=torch.float32).to(self.device)
-        log_probs = torch.stack(log_probs).to(self.device)
+        # values = torch.tensor(values, dtype=torch.float32).to(self.device)
+        values = torch.stack(values).to(self.device)
+        # log_probs = torch.stack(log_probs).to(self.device)
 
         # Now the loss equation = Total Loss = Action Loss + Value Loss - Entropy
         advantage = q_vals - values

@@ -41,7 +41,8 @@ lunar_lander = 'LunarLander-v2'
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
 space_invaders = 'SpaceInvadersNoFrameskip-v0'
-env = envWrapper.makeEnv(space_invaders)
+env_name = pong
+env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
@@ -55,10 +56,10 @@ model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 3
+rlOption = 4
 if rlOption == 1:
     # DQN
-    print('Training DQN')
+    print('Training DQN in {0}'.format(env_name))
     # Target Model required
     targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
@@ -67,7 +68,7 @@ if rlOption == 1:
 
 elif rlOption == 2:
     # Expexted SARSA
-    print('Training E_SARSA')
+    print('Training E_SARSA in {0}'.format(env_name))
     # Target Model required
     targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
@@ -76,7 +77,7 @@ elif rlOption == 2:
 
 elif rlOption == 3:
     # REINFORCE
-    print('Training REINFORCE')
+    print('Training REINFORCE in {0}'.format(env_name))
     model = models.PolicyNeuralNetworkAdvanced(in_channels, out_channels).to(device)
     # model = models.PolicyNeuralNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
@@ -85,7 +86,7 @@ elif rlOption == 3:
 
 elif rlOption == 4:
     # A2C
-    print('Training A2C')
+    print('Training A2C in {0}'.format(env_name))
     # TODO Potentially multiple workers with different envs, provides
     # Redo these declerations as requires different network
     model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
