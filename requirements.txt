@@ -1,7 +1,8 @@
 future==0.18.2
 gym==0.21.0
-numpy==1.19.5
+numpy~=1.22.3
 opencv-python==4.5.5.62
 torch==1.10.2
 
 torchviz~=0.0.2
+tensorboard~=2.8.0

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from torchviz import make_dot
 
+
 class Agent:
     def __init__(self, env):
         self.current_state = env.reset()
@@ -14,8 +15,8 @@ class Agent:
             current_state_t = torch.tensor(current_state_a).to(device)
             # Action probabilities
             action_probs, value = model(current_state_t) # TODO: REINFORCE will not return value (critic)
-            action_probs_n = action_probs.cpu().detach().squeeze().numpy()
-            action = np.random.choice(np.arange(env.action_space.n), p=action_probs_n)
+            action_probs_n = action_probs.cpu().detach().numpy()
+            action = np.random.choice(env.action_space.n, p=action_probs_n.squeeze(0))
 
         else:
             # Epsilon used and replay memory must be filled else random action

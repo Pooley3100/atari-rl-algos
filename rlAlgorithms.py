@@ -187,7 +187,7 @@ class E_SARSA():
 
         future_qs = self.targetModel(fstate_t)
 
-        expected_q = np.ones(future_qs.shape[0])
+        expected_q = np.zeros(future_qs.shape[0])
         max_future_qs = torch.sort(future_qs, dim=1, descending=True)[0].cpu().detach()
         greedy_actions = np.ones(future_qs.shape[0])
 
@@ -198,20 +198,19 @@ class E_SARSA():
             while future_max_qs_num[i][col] == future_max_qs_num[i][col + 1]:
                 greedy_actions[i] += 1
                 col += 1
-            continue
 
         # Action probabilites
-        # non_greedy_action_probability = self.epsilon / self.env.action_space.n
-        # greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
-        greedy_action_probability = (1 - self.epsilon)
-        non_greedy_action_probability = self.epsilon
+        non_greedy_action_probability = self.epsilon / self.env.action_space.n
+        greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
+        # greedy_action_probability = (1 - self.epsilon)
+        # non_greedy_action_probability = self.epsilon
 
-        for i, x in enumerate(future_qs_num):
+        for i in range(future_qs_num.shape[0]):
             for j in range(self.env.action_space.n):
                 if future_qs_num[i][j] == max_future_qs[i][0]:
                     # test = future_qs_num[i][j] * greedy_action_probability
                     # test1 = future_qs_num[i][j]
-                    expected_q[i] += future_qs_num[i][j] * greedy_action_probability
+                    expected_q[i] += future_qs_num[i][j] * greedy_action_probability[0]
                 else:
                     expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
 
@@ -413,6 +412,8 @@ class A2C:
         self.entropy_sum = 0
         self.optimizer = optim
         self.device = device
+        self.entropy_coef = 0.01
+        self.value_coef = 0.5
 
     def play(self):
         # Loop through epsiodes, every batch train
@@ -438,7 +439,7 @@ class A2C:
             entropy = -np.sum(np.mean(action_prob) * np.log(action_prob))
             self.entropy_sum += entropy
 
-            if done or (eps % self.settings['BATCH_SIZE'] == 0):
+            if done or (eps+1 % self.settings['BATCH_SIZE'] == 0):
                 self.train(replay_mem, log_probs, values)
 
                 replay_mem = []
@@ -452,36 +453,43 @@ class A2C:
                     total_rewards = []
 
     def train(self, replay_mem, log_probs, values):
-        q_vals = np.zeros_like(values)
+        q_vals = []
         rewards = np.array([transition[2] for transition in replay_mem])
         dones = np.array([transition[4] for transition in replay_mem])
         future_states = np.array([transition[3] for transition in replay_mem])
         future_states = torch.tensor(future_states).to(self.device)
+        rewards = torch.tensor(rewards).to(self.device)
 
         # Find Q_Values with Discounted Rewards
         if dones[-1]:
             q_val = rewards[-1]
-            q_val = torch.FloatTensor(np.atleast_2d(q_val))
+            # q_val = torch.FloatTensor(np.atleast_2d(q_val))
         else:
             _, q_val = self.ActorCritic(future_states[-1].unsqueeze(0))
 
-        for i in range(len(replay_mem)):
-            # TODO Done Mask
-            q_val = rewards[i] * q_val * self.settings['DISCOUNT']
-            q_vals[i] = q_val.cpu().detach().numpy()
+        q_vals.append(q_val)
+        for i in reversed(range(0, len(rewards) - 1)):
+            if not dones[i]:
+                q_val = rewards[i] + q_val * self.settings['DISCOUNT']
+                q_vals.append(q_val)
+            else:
+                q_vals.append(rewards[i])
+        # q_vals.reverse()
+        q_vals = torch.stack(q_vals)
 
         # Convert values, q values and log to tensor to allow loss calculation
         # q_vals = torch.tensor(q_vals, dtype=torch.float32).to(self.device)
-        q_vals = torch.FloatTensor(q_vals).to(self.device)
+        # q_vals = torch.FloatTensor(q_vals).to(self.device)
         values = torch.tensor(values, dtype=torch.float32).to(self.device)
         log_probs = torch.stack(log_probs).to(self.device)
 
         # Now the loss equation = Total Loss = Action Loss + Value Loss - Entropy
         advantage = q_vals - values
-        action_loss = (-log_probs * advantage).mean()
-        value_loss = 0.6 * advantage.pow(2).mean()
-        total_loss = action_loss + value_loss + 0.001 * self.entropy_sum
+        action_loss = -(log_probs * advantage).mean()
+        value_loss = advantage.pow(2).mean()
+        total_loss = action_loss + (self.value_coef * value_loss) - (self.entropy_coef * self.entropy_sum)
 
         self.optimizer.zero_grad()
         total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.ActorCritic.parameters(), 0.5)
         self.optimizer.step()

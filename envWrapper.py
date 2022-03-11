@@ -4,7 +4,8 @@ import collections
 import numpy as np
 
 #TODO: Rewrite Each wrapper, use really good article to help and allow different games to be wrapped
-#Frame Skip from stack 
+#Frame Skip from stack
+# Currently based in part on stable baselines !!!
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
         super(FireResetEnv, self).__init__(env)
@@ -92,6 +93,7 @@ class BufferWrapper(gym.ObservationWrapper):
         self.buffer[-1] = observation
         return self.buffer
 
+# BATCH CHANNEL HEIGHT WITH TO BATCH WIDTH HEIGHT CHANNEL
 # convert to BCHW from BWHC 
 class ImageToPyTorch(gym.ObservationWrapper):
     def __init__(self, env):
@@ -103,6 +105,7 @@ class ImageToPyTorch(gym.ObservationWrapper):
     def observation(self, observation):
         return np.moveaxis(observation, 2, 0)
 
+# TODO Apparently can get better results sometimes if 0 to 255
 # Normalize the numbers to make it easier to work with. 
 class ScaledFloatFrame(gym.ObservationWrapper):
     def observation(self, obs):
