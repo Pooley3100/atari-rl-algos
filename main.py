@@ -33,7 +33,7 @@ model to train and target to predict
 
 # Non atari environment
 lunar_lander = 'LunarLander-v2'
-# env = gym.make(lunar_lander)
+env = gym.make(lunar_lander)
 
 # MsPacman-v5, Breakout-v5
 # render_mode='human' for watching.
@@ -42,7 +42,7 @@ pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
 space_invaders = 'SpaceInvadersNoFrameskip-v0'
 env_name = pong
-env = envWrapper.makeEnv(env_name)
+# env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
@@ -51,10 +51,10 @@ print("out channels", out_channels)
 print("in channels", in_channels)
 
 # Model
-model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
+# model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 
 # Optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
+# optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
 rlOption = 4
 if rlOption == 1:
@@ -89,9 +89,10 @@ elif rlOption == 4:
     print('Training A2C in {0}'.format(env_name))
     # TODO Potentially multiple workers with different envs, provides
     # Redo these declerations as requires different network
-    model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
+    # model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
+    model = models.ActorCriticNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
-    a2c = rlAlgorithms.A2C(model, env, settings, optimizer, device)
+    a2c = rlAlgorithms.TrainA2C(model, settings, optimizer, device, lunar_lander)
 
     a2c.play()
 

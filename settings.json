@@ -1,7 +1,7 @@
 {
     "MEMORY_SIZE": 10000,
     "REPLAY_MIN": 300,
-    "BATCH_SIZE": 32,
+    "BATCH_SIZE": 102,
     "LEARNING_RATE": 1e-4,
     "EPSILON_START": 0.99,
     "EPSILON_END": 0.02,

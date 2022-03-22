@@ -41,7 +41,7 @@ class Agent:
         self.current_state = new_state
 
         if done:
-            # Draw neural network
+            # TODO put somewhere else Draw neural network
             # make_dot(action_probs, params=dict(list(model.named_parameters()))).render("rnn_torchviz", format="png")
 
             self.current_state = env.reset()

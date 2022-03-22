@@ -32,6 +32,7 @@ class NeuralNetworkBasic(nn.Module):
         # print(x.shape)
         return x
 
+
 # Used to test that REINFORCE actually works, but only on CartPole environment, however rather basic.
 class PolicyNeuralNetworkBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -171,6 +172,44 @@ class ActorCriticNetwork(nn.Module):
         prob_dist = self.actor(x)
 
         return prob_dist, value
+
+
+class ActorCriticNetworkBasic(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ActorCriticNetworkBasic, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(in_channels[0], 512),
+            nn.ReLU(),
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU()
+        )
+
+        self.critic = nn.Sequential(torch.nn.Linear(64, 1))
+
+        self.actor = nn.Sequential(torch.nn.Linear(64, out_channels),
+                                   torch.nn.Softmax(dim=-1))
+
+    def forward(self, state):
+        x = self.fc(state.view(state.size()[0], -1))
+        value = self.critic(x)
+
+        prob_dist = self.actor(x)
+
+        return prob_dist, value
+
+    def get_critic(self, state):
+        x = self.fc(state.view(state.size()[0], -1))
+        return self.critic(x)
+
+    def eval_action(self, state, action):
+        prob_dist, value = self.forward(state)
+        dist = torch.distributions.Categorical(prob_dist)
+        log_probs = dist.log_prob(action).view(-1, 1)
+        entropy = dist.entropy().mean()
+
+        return value, log_probs, entropy
 
 
 
