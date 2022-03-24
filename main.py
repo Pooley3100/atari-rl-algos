@@ -56,7 +56,7 @@ print("in channels", in_channels)
 # Optimizer
 # optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 4
+rlOption = 5
 if rlOption == 1:
     # DQN
     print('Training DQN in {0}'.format(env_name))
@@ -85,6 +85,14 @@ elif rlOption == 3:
     reinforce.play()
 
 elif rlOption == 4:
+    # Vanilla Actor Critic
+    # Mostly for small state space, such as cart pole and lunar lander
+    print('Training A2C in {0}'.format(env_name))
+    actorCritic = rlAlgorithms.ActorCritic(env=env, device=device, in_channels=in_channels, out_channels=out_channels, settings=settings)
+
+    actorCritic.play()
+
+elif rlOption == 5:
     # A2C
     print('Training A2C in {0}'.format(env_name))
     # TODO Potentially multiple workers with different envs, provides

@@ -192,7 +192,7 @@ class ActorCriticNetworkBasic(nn.Module):
                                    torch.nn.Softmax(dim=-1))
 
     def forward(self, state):
-        x = self.fc(state.view(state.size()[0], -1))
+        x = self.fc(state)
         value = self.critic(x)
 
         prob_dist = self.actor(x)
@@ -200,7 +200,7 @@ class ActorCriticNetworkBasic(nn.Module):
         return prob_dist, value
 
     def get_critic(self, state):
-        x = self.fc(state.view(state.size()[0], -1))
+        x = self.fc(state)
         return self.critic(x)
 
     def eval_action(self, state, action):
@@ -210,6 +210,38 @@ class ActorCriticNetworkBasic(nn.Module):
         entropy = dist.entropy().mean()
 
         return value, log_probs, entropy
+
+
+class ActorBasic(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ActorBasic, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(in_channels[0], 128),
+            nn.Tanh(),
+            nn.Linear(128,64),
+            nn.Tanh(),
+            nn.Linear(64, out_channels),
+            nn.Softmax()
+        )
+
+    def forward(self, state):
+        return self.model(state)
+
+
+class CriticBasic(nn.Module):
+    def __init__(self, in_channels):
+        super(CriticBasic, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(in_channels[0], 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+        )
+
+    def forward(self, state):
+        return self.model(state)
+
 
 
 
