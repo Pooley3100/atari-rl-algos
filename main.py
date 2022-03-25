@@ -33,7 +33,7 @@ model to train and target to predict
 
 # Non atari environment
 lunar_lander = 'LunarLander-v2'
-env = gym.make(lunar_lander)
+# env = gym.make(lunar_lander)
 
 # MsPacman-v5, Breakout-v5
 # render_mode='human' for watching.
@@ -41,8 +41,8 @@ env = gym.make(lunar_lander)
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
 space_invaders = 'SpaceInvadersNoFrameskip-v0'
-env_name = pong
-# env = envWrapper.makeEnv(env_name)
+env_name = breakout
+env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
@@ -51,12 +51,12 @@ print("out channels", out_channels)
 print("in channels", in_channels)
 
 # Model
-# model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
+model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 
 # Optimizer
-# optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
+optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 5
+rlOption = 1
 if rlOption == 1:
     # DQN
     print('Training DQN in {0}'.format(env_name))

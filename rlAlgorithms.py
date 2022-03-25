@@ -68,7 +68,7 @@ class DQN():
 
         # Now get predicted state action values for all states, 
         # send state to network to get values for each action
-        # gather along columns to get predicted q values for each action in the batch
+        # gather along columns to get predicted q values for each action in the batchd
         # then squeeze to make tensor 1d again, giving list of q values for each action
         state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
 
@@ -100,7 +100,7 @@ class DQN():
         epsilon = self.settings['EPSILON_START']
         reward_buf = collections.deque(maxlen=10000)
         frames = 0
-        for eps in range(1000):
+        for eps in range(20000):
             done = False
             reward_buf.clear()
             self.eps = eps
