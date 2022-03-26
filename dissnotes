@@ -21,9 +21,15 @@ figure out expected sarsa and reinforce
 expected sarsa interesting one.
 
 have research written up.
-have some tensorboard charts. 
+have some tensorboard charts.
 
+RESULTS <<<<
+sum up not average rewards <<<
+charts for e_sarsa and dqn in breakout and pong good
+pong semi good for others
+then some ehh for space invaders.
 
+SETTINGS LIST <<<<
 settings which work well for dqn pong:
 {
     "MEMORY_SIZE": 10000,
@@ -37,3 +43,6 @@ settings which work well for dqn pong:
     "TARGET_UPDATE": 1000
 }
 gets positive about 140 episodes. At 400 can win
+
+
+best MODELS LIST<<<<<
