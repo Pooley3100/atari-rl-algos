@@ -41,7 +41,7 @@ lunar_lander = 'LunarLander-v2'
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
 space_invaders = 'SpaceInvadersNoFrameskip-v0'
-env_name = breakout
+env_name = pong
 env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
@@ -56,7 +56,7 @@ model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 1
+rlOption = 2
 if rlOption == 1:
     # DQN
     print('Training DQN in {0}'.format(env_name))

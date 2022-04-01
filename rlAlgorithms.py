@@ -266,11 +266,10 @@ class E_SARSA():
 
     def play(self):
         self.epsilon = self.settings['EPSILON_START']
-        reward_buf = collections.deque(maxlen=10000)
         frames = 0
         for eps in range(1000):
             done = False
-            reward_buf.clear()
+            reward_buf = 0
 
             while not done:
                 frames += 1
@@ -294,13 +293,13 @@ class E_SARSA():
 
                 self.train_E_SARSA()
 
-                reward_buf.append(reward)
+                reward_buf += reward
 
                 if frames % self.settings['TARGET_UPDATE'] == 0:
                     self.targetModel.load_state_dict(self.model.state_dict())
                     torch.save(self.model.state_dict(), 'Models/eSarsaWeights')
 
-            writer.add_scalar('Total/Reward', np.mean(reward_buf), eps)
+            writer.add_scalar('Total/Reward', reward_buf, eps)
             writer.add_scalar('Total/Epsilon', self.epsilon, eps)
 
             # Current logging
