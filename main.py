@@ -56,7 +56,7 @@ model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 
-rlOption = 2
+rlOption = 1
 if rlOption == 1:
     # DQN
     print('Training DQN in {0}'.format(env_name))

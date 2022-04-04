@@ -1,4 +1,4 @@
-from tkinter import E
+
 import models
 import envWrapper
 import torch
@@ -10,17 +10,17 @@ from gym.wrappers import Monitor
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-env = envWrapper.makeEnv('PongNoFrameskip-v4')
+env = envWrapper.makeEnv('BreakoutNoFrameskip-v4')
 env = Monitor(env, 'Videos', force=True)
 
 #Load Model
 #TODO: Select which model the network is built of.
 model = models.NeuralNetworkAdvanced(env.observation_space.shape, env.action_space.n).to(device)
-model.load_state_dict(torch.load('Models/dqnWeights'))
+model.load_state_dict(torch.load('Models/eSarsaWeights-Pong'))
 
 current_state = env.reset()
 count = 0
-while count < 3:
+while count < 10:
     env.render()
     # Depending on epsilon get action from target network or random action
 

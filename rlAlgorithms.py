@@ -98,20 +98,21 @@ class DQN():
 
     def play(self):
         epsilon = self.settings['EPSILON_START']
-        reward_buf = collections.deque(maxlen=10000)
         frames = 0
-        for eps in range(20000):
+        for eps in range(200000):
             done = False
-            reward_buf.clear()
+            reward_buf = 0
             self.eps = eps
 
             while not done:
-                frames += 1
-                self.frames = frames
                 # TODO: Different way of doing this 
                 # TODO: alternate epsilon methods for non approximation
                 if (len(self.replay_mem) > self.settings['REPLAY_MIN']):
-                    epsilon = max(epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
+                    frames += 1
+                    self.frames = frames
+                    # epsilon = max(epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
+                    if frames < self.settings['FINAL_EXPLORATION']:
+                        epsilon = epsilon - ((self.settings['EPSILON_START'] - self.settings['EPSILON_END'])/self.settings['FINAL_EXPLORATION'])
 
                 if eps % 100 == 0:
                     self.env.render()
@@ -127,21 +128,22 @@ class DQN():
 
                 self.train_DQN()
 
-                reward_buf.append(reward)
+                reward_buf += reward
                 writer.add_scalar('Epsilon', epsilon, frames)
 
                 if frames % self.settings['TARGET_UPDATE'] == 0:
                     self.targetModel.load_state_dict(self.model.state_dict())
                     torch.save(self.model.state_dict(), 'Models/dqnWeights')
 
-            epReward = mean(reward_buf)
+            epReward = reward_buf
             writer.add_scalar('Total/Reward', epReward, eps)
             writer.add_scalar('Total/Epsilon', epsilon, eps)
 
             # Current logging
             if eps % 5 == 0:
-                print(np.mean(reward_buf))
-                print(eps)
+                print('Episode Reward', reward_buf)
+                print('Epsilon', epsilon)
+                print('Episode Number', eps)
                 writer.flush()
 
 
@@ -267,7 +269,7 @@ class E_SARSA():
     def play(self):
         self.epsilon = self.settings['EPSILON_START']
         frames = 0
-        for eps in range(1000):
+        for eps in range(100000):
             done = False
             reward_buf = 0
 
@@ -297,7 +299,7 @@ class E_SARSA():
 
                 if frames % self.settings['TARGET_UPDATE'] == 0:
                     self.targetModel.load_state_dict(self.model.state_dict())
-                    torch.save(self.model.state_dict(), 'Models/eSarsaWeights')
+                    torch.save(self.model.state_dict(), 'Models/eSarsaWeights-Pong')
 
             writer.add_scalar('Total/Reward', reward_buf, eps)
             writer.add_scalar('Total/Epsilon', self.epsilon, eps)
