@@ -8,29 +8,17 @@ import numpy as np
 class NeuralNetworkBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(NeuralNetworkBasic, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=8, stride=4)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, out_channels)
+        self.fc = nn.Sequential(
+            nn.Linear(in_channels[0], 512),
+            nn.ReLU(),
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Linear(128, out_channels),
+            nn.ReLU()
+        )
 
-        # now flatten
-        # pass cnn to linear via flatten to final layer of 512, then pass to action space size.
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = (F.relu(self.conv2(x)))
-        # print(x.shape)
-        # x = F.relu(self.conv3(x))
-        # print(x.shape)
-        # x = x.view(-1, 384)
-        x = x.flatten(start_dim=1)
-        # print(x.shape)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        # print(x.shape)
-        return x
+    def forward(self, state):
+        return self.fc(state.view(state.size()[0], -1))
 
 
 # Used to test that REINFORCE actually works, but only on CartPole environment, however rather basic.

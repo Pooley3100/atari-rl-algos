@@ -45,4 +45,20 @@ settings which work well for dqn pong:
 gets positive about 140 episodes. At 400 can win
 
 
+settings for lunar lander
+{
+    "MEMORY_SIZE": 10000,
+    "REPLAY_MIN": 1000,
+    "BATCH_SIZE": 32,
+    "LEARNING_RATE": 1e-4,
+    "EPSILON_START": 1,
+    "EPSILON_END": 0.1,
+    "EPSILON_DECAY": 0.999985,
+    "FINAL_EXPLORATION": 10000,
+    "DISCOUNT": 0.99,
+    "TARGET_UPDATE": 500
+}
+
+
+
 best MODELS LIST<<<<<

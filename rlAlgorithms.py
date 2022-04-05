@@ -16,8 +16,9 @@ writer = SummaryWriter()
 
 
 class DQN():
-    def __init__(self, model, env, targetModel, optimizer, settings, device) -> None:
+    def __init__(self, model, env, targetModel, optimizer, settings, device, ddqn) -> None:
         self.env = env
+        self.ddqn = ddqn
         self.settings = settings
         self.optimizer = optimizer
         self.model = model
@@ -60,8 +61,6 @@ class DQN():
         # unsqueeze -1 converts 1d arrays to 2d array, (i.e. [3] to [3,1])
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
         actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
-        # rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)
-        # dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
         dones_t = torch.ByteTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
@@ -72,10 +71,14 @@ class DQN():
         # then squeeze to make tensor 1d again, giving list of q values for each action
         state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
 
-        # Now send next states to target model, get action values, find max value and just take that
-        # Dim 0 is batch
-        future_qs = self.targetModel(fstate_t)
-        max_future_qs = future_qs.max(1)[0]
+        if self.ddqn:
+            future_state_actions = self.model(fstate_t).max(1)[1]
+            max_future_qs = self.targetModel(fstate_t).gather(1, future_state_actions.unsqueeze(-1)).squeeze(-1)
+        else:
+            # Now send next states to target model, get action values, find max value and just take that
+            # Dim 0 is batch
+            future_qs = self.targetModel(fstate_t)
+            max_future_qs = future_qs.max(1)[0]
 
         # One trick for dones
         # targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
@@ -88,9 +91,9 @@ class DQN():
 
         # TODO different loss functions
         # loss = F.smooth_l1_loss(state_action_qs, targets)
+        self.optimizer.zero_grad()
         loss = nn.MSELoss()(state_action_qs, targets)
         writer.add_scalar("Loss/train", loss, self.frames)
-        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
@@ -105,19 +108,15 @@ class DQN():
             self.eps = eps
 
             while not done:
-                # TODO: Different way of doing this 
-                # TODO: alternate epsilon methods for non approximation
-                if (len(self.replay_mem) > self.settings['REPLAY_MIN']):
-                    frames += 1
-                    self.frames = frames
-                    # epsilon = max(epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
-                    if frames < self.settings['FINAL_EXPLORATION']:
-                        epsilon = epsilon - ((self.settings['EPSILON_START'] - self.settings['EPSILON_END'])/self.settings['FINAL_EXPLORATION'])
+                frames += 1
+                self.frames = frames
+
+                if frames <= self.settings['FINAL_EXPLORATION']:
+                    epsilon = epsilon - ((self.settings['EPSILON_START'] - self.settings['EPSILON_END'])/self.settings['FINAL_EXPLORATION'])
 
                 if eps % 100 == 0:
                     self.env.render()
 
-                # TODO: Calculate whether using approximate methods or not
                 approximate = False
 
                 self.replay_mem, reward, done, self.env, _, _, _ = self.agent.step(self.env, approximate, self.model, epsilon,
@@ -125,7 +124,6 @@ class DQN():
                                                                           self.settings['REPLAY_MIN'])
 
                 # Train method
-
                 self.train_DQN()
 
                 reward_buf += reward
