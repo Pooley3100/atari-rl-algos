@@ -16,11 +16,11 @@ env = Monitor(env, 'Videos', force=True)
 #Load Model
 #TODO: Select which model the network is built of.
 model = models.NeuralNetworkAdvanced(env.observation_space.shape, env.action_space.n).to(device)
-model.load_state_dict(torch.load('Models/eSarsaWeights-Pong'))
+model.load_state_dict(torch.load('Models/dqnWeights'))
 
 current_state = env.reset()
 count = 0
-while count < 10:
+while count < 3:
     env.render()
     # Depending on epsilon get action from target network or random action
 

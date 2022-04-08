@@ -172,24 +172,44 @@ class E_SARSA():
         future_states = np.array([transition[3] for transition in batch])
         dones = np.array([transition[4] for transition in batch])
 
-        # Convert to tensor from numpy (supposedly this is faster?)
-        # unsqueeze -1 converts 1d arrays to 2d array, (i.e. [3] to [3,1])
+        # Convert to tensor from numpy
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
         actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
-        # rewards_t = torch.as_tensor(rewards, dtype=torch.float32).unsqueeze(-1)
-        # dones_t = torch.as_tensor(dones, dtype=torch.long).unsqueeze(-1)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
-        dones_t = torch.LongTensor(dones).to(self.device)
+        dones_t = torch.ByteTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
 
-        # One method
         # This is predict
         state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
-        # state_action_qs = self.model(state_t).cpu().detach().numpy()
-        # state_action_qs = self.model(state_t)
-        # Calculate number of greedy actions
 
         future_qs = self.targetModel(fstate_t)
+
+        # expected_q = np.zeros(future_qs.shape[0])
+        # max_future_qs = future_qs.max(1)[0].cpu().detach()
+        # greedy_actions = np.zeros(future_qs.shape[0])
+        #
+        # future_qs_num = future_qs.cpu().detach()
+        # future_qs_num_max = np.array(max_future_qs)
+        # for i in range(future_qs_num_max.shape[0]):
+        #     for j in range(self.env.action_space.n):
+        #         if future_qs_num[i][j] == future_qs_num_max[i]:
+        #             greedy_actions[i] += 1
+        #
+        # # Action probabilites
+        # non_greedy_action_probability = self.epsilon / self.env.action_space.n
+        # greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
+        #
+        # for i in range(future_qs_num_max.shape[0]):
+        #     for j in range(self.env.action_space.n):
+        #         if future_qs_num[i][j] == future_qs_num_max[i]:
+        #             expected_q[i] += future_qs_num[i][j] * greedy_action_probability[i]
+        #         else:
+        #             expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
+        #
+        # expected_q_t = torch.FloatTensor(expected_q).to(self.device)
+        #
+        # expected_q_t[dones_t] = 0.0
+        # targets = rewards_t + self.settings['DISCOUNT'] * expected_q_t
 
         expected_q = np.zeros(future_qs.shape[0])
         max_future_qs = torch.sort(future_qs, dim=1, descending=True)[0].cpu().detach()
@@ -202,10 +222,12 @@ class E_SARSA():
             while future_max_qs_num[i][col] == future_max_qs_num[i][col + 1]:
                 greedy_actions[i] += 1
                 col += 1
+                if col >= self.env.action_space.n - 1:
+                    break
 
         # Action probabilites
         non_greedy_action_probability = self.epsilon / self.env.action_space.n
-        greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
+        greedy_action_probability = ((1 - self.epsilon) / greedy_actions) + non_greedy_action_probability
         # greedy_action_probability = (1 - self.epsilon)
         # non_greedy_action_probability = self.epsilon
 
@@ -223,49 +245,14 @@ class E_SARSA():
         expected_q[dones_t] = 0.0
         targets = rewards_t + self.settings['DISCOUNT'] * expected_q
 
-        # loss = F.smooth_l1_loss(state_action_qs, targets)
-
-        # One method <<<<<<<<<<<<<,
-
-        # Now get predicted state action values for all states,
-        # send state to network to get values for each action
-        # gather along columns to get predicted q values for each action in the batch
-        # then squeeze to make tensor 1d again, giving list of q values for each action
-        # state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
-
-        # Now send next states to target model, get action values, find max value and just take that
-        # Dim 0 is batch
-        # future_qs = self.targetModel(fstate_t)
-        # mean_qs = future_qs.mean(1)
-
-        # One trick for dones
-        # targets = max_future_qs*DISCOUNT*rewards_t*(1 - dones_t)
-        # Another
-        # mean_qs[dones_t] = 0.0
-        # mean_qs = mean_qs.detach()
-        # targets = mean_qs * self.settings['DISCOUNT'] + rewards_t
-
-        # action_q_values = torch.gather(input=current_qs, dim=1, index=actions_t)
-
-        # TODO different loss functions
-        # loss = F.smooth_l1_loss(state_action_qs, targets)
-
-        # calculate if action is greddy or if action is non greedy, then act upon that information
-
-        # Calculate the sum of next q values * their probabilities
-
-        # If using non-greedy action, then choose with probability distribution from softmax?
-        # targets = torch.tensor(targets, dtype=torch.float32).unsqueeze(-1).to(self.device)
-
-        loss = nn.MSELoss()(state_action_qs, targets)
         self.optimizer.zero_grad()
+        loss = nn.MSELoss()(state_action_qs, targets)
         loss.backward()
         self.optimizer.step()
 
         return True
 
     def play(self):
-        self.epsilon = self.settings['EPSILON_START']
         frames = 0
         for eps in range(100000):
             done = False
@@ -273,15 +260,12 @@ class E_SARSA():
 
             while not done:
                 frames += 1
-                # TODO: Different way of doing this 
-                # TODO: alternate epsilon methods for non approximation
-                if (len(self.replay_mem) > self.settings['REPLAY_MIN']):
-                    self.epsilon = max(self.epsilon * self.settings['EPSILON_DECAY'], self.settings['EPSILON_END'])
+                if frames <= self.settings['FINAL_EXPLORATION']:
+                    self.epsilon = self.epsilon - ((self.settings['EPSILON_START'] - self.settings['EPSILON_END']) / self.settings['FINAL_EXPLORATION'])
 
                 if eps % 100 == 0:
                     self.env.render()
 
-                # TODO: Calculate whether using approximate methods or not
                 approximate = False
 
                 self.replay_mem, reward, done, self.env, _, _, _ = self.agent.step(self.env, approximate, self.model,

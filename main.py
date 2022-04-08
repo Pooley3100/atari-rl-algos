@@ -40,9 +40,9 @@ lunar_lander = 'LunarLander-v2'
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
 space_invaders = 'SpaceInvadersNoFrameskip-v0'
-env_name = lunar_lander
-env = gym.make(lunar_lander)
-# env = envWrapper.makeEnv(env_name)
+env_name = breakout
+# env = gym.make(lunar_lander)
+env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
 out_channels = env.action_space.n
@@ -51,7 +51,8 @@ print("out channels", out_channels)
 print("in channels", in_channels)
 
 # Model
-model = models.NeuralNetworkBasic(in_channels, out_channels).to(device)
+model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
+model.load_state_dict(torch.load('Models/dqnWeights')) # TEMPORARY LOAD IN TO RESUMER <<<<<<
 
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
@@ -61,7 +62,7 @@ if rlOption == 1:
     # DQN
     print('Training DQN in {0}'.format(env_name))
     # Target Model required
-    targetModel = models.NeuralNetworkBasic(in_channels, out_channels).to(device)
+    targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
     # Remember to either set ddqn to true or not
     DQN = rlAlgorithms.DQN(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device, ddqn = True)
@@ -71,7 +72,7 @@ elif rlOption == 2:
     # Expexted SARSA
     print('Training E_SARSA in {0}'.format(env_name))
     # Target Model required
-    targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
+    targetModel = models.NeuralNetworkBasic(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
     e_sarsa = rlAlgorithms.E_SARSA(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device)
     e_sarsa.play()
