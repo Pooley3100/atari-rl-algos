@@ -1,18 +1,13 @@
 import json
-
 import gym
 import torch
 import envWrapper
 import models
 import rlAlgorithms
 
-
-
-# TODO: Redo the venv installs, there are too many currently that are not needed
-# TODO: Change up settings, and how epsilon decay is done
-
 with open("settings.json") as read_file:
     settings = json.load(read_file)
+
 
 # Tale advantage of gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -31,17 +26,17 @@ model to train and target to predict
 
 # SETUP ENVIRONMENT, SELECT GAME TO TRAIN ON HERE
 
-# Non atari environment
+# Non atari environment, BASIC models and gym.make
 lunar_lander = 'LunarLander-v2'
+cartpole = 'CartPole-v0'
 
-# MsPacman-v5, Breakout-v5
-# render_mode='human' for watching.
-# env = gym.make('ALE/Breakout-v5', render_mode='human')
+# Atari environments with advanced models and envWrapper.makeEnv
 pong = 'PongNoFrameskip-v4'
 breakout = 'BreakoutNoFrameskip-v4'
-space_invaders = 'SpaceInvadersNoFrameskip-v0'
-env_name = breakout
-# env = gym.make(lunar_lander)
+space_invaders = 'SpaceInvadersNoFrameskip-v4'
+
+env_name = pong
+# env = gym.make(env_name)
 env = envWrapper.makeEnv(env_name)
 
 in_channels = env.observation_space.shape
@@ -52,7 +47,7 @@ print("in channels", in_channels)
 
 # Model
 model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
-model.load_state_dict(torch.load('Models/dqnWeights')) # TEMPORARY LOAD IN TO RESUMER <<<<<<
+# model.load_state_dict(torch.load('Models/dqnWeights')) # TEMPORARY LOAD IN TO RESUMER <<<<<<
 
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
@@ -64,8 +59,9 @@ if rlOption == 1:
     # Target Model required
     targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
-    # Remember to either set ddqn to true or not
-    DQN = rlAlgorithms.DQN(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device, ddqn = True)
+    # Remember to either set ddqn to true or not based on testing preference.
+    ddqn = False
+    DQN = rlAlgorithms.DQN(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device, ddqn = ddqn)
     DQN.play()
 
 elif rlOption == 2:
@@ -80,16 +76,15 @@ elif rlOption == 2:
 elif rlOption == 3:
     # REINFORCE
     print('Training REINFORCE in {0}'.format(env_name))
+    # model = models.PolicyNeuralNetworkAdvanced(in_channels, out_channels).to(device)
     model = models.PolicyNeuralNetworkAdvanced(in_channels, out_channels).to(device)
-    # model = models.PolicyNeuralNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
     reinforce = rlAlgorithms.REINFORCE(model, env, optimizer, settings, device)
     reinforce.play()
 
 elif rlOption == 4:
-    # Vanilla Actor Critic
-    # Mostly for small state space, such as cart pole and lunar lander
-    print('Training A2C in {0}'.format(env_name))
+    # Vanilla Actor Critic, no multiple workers.
+    print('Training ActorCritic in {0}'.format(env_name))
     actorCritic = rlAlgorithms.ActorCritic(env=env, device=device, in_channels=in_channels, out_channels=out_channels, settings=settings)
 
     actorCritic.play()
@@ -97,8 +92,6 @@ elif rlOption == 4:
 elif rlOption == 5:
     # A2C
     print('Training A2C in {0}'.format(env_name))
-    # TODO Potentially multiple workers with different envs, provides
-    # Redo these declerations as requires different network
     # model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
     model = models.ActorCriticNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])

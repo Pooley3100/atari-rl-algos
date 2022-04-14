@@ -3,8 +3,7 @@ import gym
 import collections
 import numpy as np
 
-# TODO: Rewrite Each wrapper, use really good article to help and allow different games to be wrapped
-# Coded with help from book 'Deep Reinforcement Learning Hands On' and then Stable Baselines common atari wrappers
+# Code from book 'Deep Reinforcement Learning Hands On' and then Stable Baselines common atari wrappers.
 # Presses Fire button if required for game to start
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
@@ -25,7 +24,7 @@ class FireResetEnv(gym.Wrapper):
             self.env.reset()
         return obs
 
-# Take 30 frames and skip, also max over 2 frames as atari has flash issues
+# Skip over 4 frames and then take then max over for flash issues.
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
         super(MaxAndSkipEnv, self).__init__(env)
@@ -73,12 +72,12 @@ class ProcessFrame84(gym.ObservationWrapper):
         img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
         # CV2 resize takes in img and desired size. INTER AREA is resampling using pixel area relation. Can try INTER NEAREST.
         resized_screen = cv2.resize(img, (84, 110), interpolation=cv2.INTER_AREA)
-        # Not sure
+        # Then reshape.
         x_t = resized_screen[18:102, :]
         x_t = np.reshape(x_t, [84, 84, 1])
         return x_t.astype(np.uint8)
 
-# Stack frames to show action
+# Stack frames to show action, four is recommended.
 class BufferWrapper(gym.ObservationWrapper):
     def __init__(self, env, n_steps=4, dtype=np.float32):
         super(BufferWrapper, self).__init__(env)
@@ -109,7 +108,7 @@ class ImageToPyTorch(gym.ObservationWrapper):
     def observation(self, observation):
         return np.moveaxis(observation, 2, 0)
 
-# TODO Apparently can get better results sometimes if 0 to 255
+# Apparently can get better results sometimes if 0 to 255
 # Normalize the numbers to make it easier to work with. 
 class ScaledFloatFrame(gym.ObservationWrapper):
     def observation(self, obs):

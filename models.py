@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-# TODO: Edit advanced network
-# TODO: Edit basic to work better
+# TODO: Conv out
+# TODO: network sizes and forward pass
 class NeuralNetworkBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(NeuralNetworkBasic, self).__init__()
@@ -21,7 +21,6 @@ class NeuralNetworkBasic(nn.Module):
         return self.fc(state.view(state.size()[0], -1))
 
 
-# Used to test that REINFORCE actually works, but only on CartPole environment, however rather basic.
 class PolicyNeuralNetworkBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(PolicyNeuralNetworkBasic, self).__init__()
@@ -61,7 +60,6 @@ class NeuralNetworkAdvanced(nn.Module):
             # nn.Softmax(dim=-1)
         )
 
-    # TODO: Don't Quite Like how i do this <<<<
     def _get_conv_out(self, shape):
         o = self.conv(torch.zeros(1, *shape))
         return int(np.prod(o.size()))
@@ -69,12 +67,6 @@ class NeuralNetworkAdvanced(nn.Module):
     def forward(self, x):
         conv_out = self.conv(x).view(x.size()[0], -1)
         return self.fc(conv_out)
-
-    # def get_qs(self, state):
-    #     state_t = torch.as_tensor(current_state, dtype=torch.float32)
-    #     # state_t = torch.permute(state_t, (2, 1, 0))
-    #     q_values = model.forward(state_t[None, ...])  # None removes batch for time being
-    #     return q_values
 
 
 class PolicyNeuralNetworkAdvanced(nn.Module):
@@ -106,25 +98,6 @@ class PolicyNeuralNetworkAdvanced(nn.Module):
     def forward(self, x):
         conv_out = self.conv(x).view(x.size()[0], -1)
         return self.fc(conv_out), None
-
-# TODO Change this
-class PolicyNetwork(nn.Module):
-    def __init__(self, env):
-        super(PolicyNetwork, self).__init__()
-
-        self.n_inputs = env.observation_space.shape[0]
-        self.n_outputs = env.action_space.n
-        
-        # Define network
-        self.network = nn.Sequential(
-            nn.Linear(self.n_inputs, 16), 
-            nn.ReLU(), 
-            nn.Linear(16, self.n_outputs),
-            nn.Softmax(dim=-1))
-    
-    def predict(self, state):
-        action_probs = self.network(torch.FloatTensor(state))
-        return action_probs
 
 
 class ActorCriticNetwork(nn.Module):
@@ -230,6 +203,66 @@ class CriticBasic(nn.Module):
     def forward(self, state):
         return self.model(state)
 
+
+class CriticAdvanced(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(CriticAdvanced, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc = nn.Sequential(
+            # was 512
+            nn.Linear(conv_out_size, 100),
+            nn.ReLU(),
+            nn.Linear(100, 1),
+        )
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        conv_out = self.conv(x).view(x.size()[0], -1)
+        return self.fc(conv_out)
+
+
+class ActorAdvanced(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(ActorAdvanced, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc = nn.Sequential(
+            # was 512
+            nn.Linear(conv_out_size, 100),
+            nn.ReLU(),
+            nn.Linear(100, n_actions),
+            nn.Softmax(dim=-1)
+        )
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        conv_out = self.conv(x).view(x.size()[0], -1)
+        return self.fc(conv_out)
 
 
 
