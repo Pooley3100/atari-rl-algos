@@ -1,44 +1,12 @@
-Three theories
-1. the dqn algorithm with unsqueeze and stuff.
-2. the environment wrappers with _step.
-3. the network setup.
-
-
-
-tensorboard.
-Then onto next algortihms and expansion
-
-keep adding to diss writeup.
-
-Once dqn works:
-rewrite env wrappers
-rewrite network
-try old dqn algorithm
-Tidy.
-
-
-figure out expected sarsa and reinforce
-expected sarsa interesting one.
-
-have research written up.
-have some tensorboard charts.
-
-RESULTS <<<<
-sum up not average rewards <<<
-charts for e_sarsa and dqn in breakout and pong good
-pong semi good for others
-then some ehh for space invaders.
-
-SETTINGS LIST <<<<
-settings which work well for dqn pong:
+SETTINGS LIST <<<settings which work well for dqn pong:
 {
-    "MEMORY_SIZE": 10000,
-    "REPLAY_MIN": 300,
+    "MEMORY_SIZE": 50000,
+    "REPLAY_MIN": 5000,
     "BATCH_SIZE": 32,
     "LEARNING_RATE": 1e-4,
-    "EPSILON_START": 0.99,
-    "EPSILON_END": 0.02,
-    "EPSILON_DECAY": 0.999985,
+    "EPSILON_START": 1,
+    "EPSILON_END": 0.05,
+    "FINAL_EXPLORATION": 40000,
     "DISCOUNT": 0.99,
     "TARGET_UPDATE": 1000
 }
@@ -53,12 +21,9 @@ settings for lunar lander
     "LEARNING_RATE": 1e-4,
     "EPSILON_START": 1,
     "EPSILON_END": 0.1,
-    "EPSILON_DECAY": 0.999985,
     "FINAL_EXPLORATION": 10000,
     "DISCOUNT": 0.99,
     "TARGET_UPDATE": 500
 }
-
-
 
 best MODELS LIST<<<<<

@@ -24,7 +24,8 @@ class FireResetEnv(gym.Wrapper):
             self.env.reset()
         return obs
 
-# Skip over 4 frames and then take then max over for flash issues.
+
+# Skip over 4 frames and then take max over for flash issues.
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
         super(MaxAndSkipEnv, self).__init__(env)
@@ -49,6 +50,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         obs = self.env.reset()
         self._obs_buffer.append(obs)
         return obs
+
 
 # Reduce size and grayscale
 class ProcessFrame84(gym.ObservationWrapper):
@@ -77,6 +79,7 @@ class ProcessFrame84(gym.ObservationWrapper):
         x_t = np.reshape(x_t, [84, 84, 1])
         return x_t.astype(np.uint8)
 
+
 # Stack frames to show action, four is recommended.
 class BufferWrapper(gym.ObservationWrapper):
     def __init__(self, env, n_steps=4, dtype=np.float32):
@@ -95,6 +98,7 @@ class BufferWrapper(gym.ObservationWrapper):
         self.buffer[-1] = observation
         return self.buffer
 
+
 # BATCH CHANNEL HEIGHT WITH TO BATCH WIDTH HEIGHT CHANNEL
 # convert to BCWH from BWHC
 class ImageToPyTorch(gym.ObservationWrapper):
@@ -107,6 +111,7 @@ class ImageToPyTorch(gym.ObservationWrapper):
 
     def observation(self, observation):
         return np.moveaxis(observation, 2, 0)
+
 
 # Apparently can get better results sometimes if 0 to 255
 # Normalize the numbers to make it easier to work with. 

@@ -47,7 +47,7 @@ print("in channels", in_channels)
 
 # Model
 model = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
-# model.load_state_dict(torch.load('Models/dqnWeights')) # TEMPORARY LOAD IN TO RESUMER <<<<<<
+# model.load_state_dict(torch.load('Models/dqnWeights')) # TEMPORARY LOAD IN TO RESUME<<<<<<
 
 # Optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
@@ -55,12 +55,16 @@ optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
 rlOption = 1
 if rlOption == 1:
     # DQN
-    print('Training DQN in {0}'.format(env_name))
+    ddqn = False
+    if ddqn:
+        print('Training DDQN in {0}'.format(env_name))
+    else:
+        print('Training DQN in {0}'.format(env_name))
+
     # Target Model required
     targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
     # Remember to either set ddqn to true or not based on testing preference.
-    ddqn = False
     DQN = rlAlgorithms.DQN(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device, ddqn = ddqn)
     DQN.play()
 
@@ -68,7 +72,7 @@ elif rlOption == 2:
     # Expexted SARSA
     print('Training E_SARSA in {0}'.format(env_name))
     # Target Model required
-    targetModel = models.NeuralNetworkBasic(in_channels, out_channels).to(device)
+    targetModel = models.NeuralNetworkAdvanced(in_channels, out_channels).to(device)
     targetModel.load_state_dict(model.state_dict())
     e_sarsa = rlAlgorithms.E_SARSA(model, env, targetModel=targetModel, optimizer=optimizer, settings=settings, device=device)
     e_sarsa.play()
@@ -92,6 +96,7 @@ elif rlOption == 4:
 elif rlOption == 5:
     # A2C
     print('Training A2C in {0}'.format(env_name))
+    print('Note: Does not require optimal results')
     # model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
     model = models.ActorCriticNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])

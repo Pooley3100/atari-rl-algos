@@ -3,8 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-# TODO: Conv out
-# TODO: network sizes and forward pass
+
+def flatten(x):
+    batches = x.shape[0]
+    return x.view(batches, -1)
+
+
 class NeuralNetworkBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(NeuralNetworkBasic, self).__init__()
@@ -14,11 +18,10 @@ class NeuralNetworkBasic(nn.Module):
             nn.Linear(512, 128),
             nn.ReLU(),
             nn.Linear(128, out_channels),
-            nn.ReLU()
         )
 
     def forward(self, state):
-        return self.fc(state.view(state.size()[0], -1))
+        return self.fc(flatten(state))
 
 
 class PolicyNeuralNetworkBasic(nn.Module):
@@ -34,16 +37,16 @@ class PolicyNeuralNetworkBasic(nn.Module):
         )
 
     def forward(self, state):
-        action_probs = self.fc(state.view(state.size()[0], -1))
+        action_probs = self.fc(flatten(state))
         return action_probs, None
 
 
 class NeuralNetworkAdvanced(nn.Module):
-    def __init__(self, input_shape, n_actions):
+    def __init__(self, in_channels, out_channels):
         super(NeuralNetworkAdvanced, self).__init__()
 
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+        self.cnn = nn.Sequential(
+            nn.Conv2d(in_channels[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -51,30 +54,30 @@ class NeuralNetworkAdvanced(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        cnn_out_size = self.cnn_out_size(in_channels)
+
         self.fc = nn.Sequential(
-            # was 512
-            nn.Linear(conv_out_size, 512),
+            # was 256
+            nn.Linear(cnn_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, n_actions),
-            # nn.Softmax(dim=-1)
+            nn.Linear(512, out_channels),
         )
 
-    def _get_conv_out(self, shape):
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
+    def cnn_out_size(self, in_channels):
+        # Send dummy input through cnn then find product of this output for output size
+        return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
     def forward(self, x):
-        conv_out = self.conv(x).view(x.size()[0], -1)
-        return self.fc(conv_out)
+        cnn = self.cnn(x)
+        return self.fc(flatten(cnn))
 
 
 class PolicyNeuralNetworkAdvanced(nn.Module):
-    def __init__(self, input_shape, n_actions):
+    def __init__(self, in_channels, out_channels):
         super(PolicyNeuralNetworkAdvanced, self).__init__()
 
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+        self.cnn = nn.Sequential(
+            nn.Conv2d(in_channels[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -82,29 +85,29 @@ class PolicyNeuralNetworkAdvanced(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        cnn_out_size = self.cnn_out_size(in_channels)
+
         self.fc = nn.Sequential(
             # was 512
-            nn.Linear(conv_out_size, 100),
+            nn.Linear(cnn_out_size, 100),
             nn.ReLU(),
-            nn.Linear(100, n_actions),
+            nn.Linear(100, out_channels),
             nn.Softmax(dim=-1)
         )
 
-    def _get_conv_out(self, shape):
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
+    def cnn_out_size(self, in_channels):
+        # Send dummy input through cnn then find product of this output for output size
+        return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
     def forward(self, x):
-        conv_out = self.conv(x).view(x.size()[0], -1)
-        return self.fc(conv_out), None
+        return self.fc(flatten(self.cnn(x))), None
 
 
 class ActorCriticNetwork(nn.Module):
-    def __init__(self, input_shape, n_actions):
+    def __init__(self, in_channels, out_channels):
         super(ActorCriticNetwork, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+        self.cnn = nn.Sequential(
+            nn.Conv2d(in_channels[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -112,22 +115,24 @@ class ActorCriticNetwork(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
-        self.critic = nn.Sequential(torch.nn.Linear(conv_out_size, 512),
+        cnn_out_size = self.cnn_out_size(in_channels)
+
+        self.critic = nn.Sequential(torch.nn.Linear(cnn_out_size, 512),
                                     torch.nn.ReLU(),
                                     torch.nn.Linear(512, 1))
 
-        self.actor = nn.Sequential(torch.nn.Linear(conv_out_size, 512),
+        self.actor = nn.Sequential(torch.nn.Linear(cnn_out_size, 512),
                                    torch.nn.ReLU(),
-                                   torch.nn.Linear(512, n_actions),
+                                   torch.nn.Linear(512, out_channels),
                                    torch.nn.Softmax(dim=-1))
 
-    def _get_conv_out(self, shape):
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
+    def cnn_out_size(self, in_channels):
+        # Send dummy input through cnn then find product of this output for output size
+        return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
     def forward(self, state):
-        x = self.conv(state).view(state.size()[0], -1)
+        x = flatten(self.cnn(state))
+
         value = self.critic(x)
 
         prob_dist = self.actor(x)
@@ -160,15 +165,17 @@ class ActorCriticNetworkBasic(nn.Module):
 
         return prob_dist, value
 
-    def get_critic(self, state):
+    def critic_val(self, state):
         x = self.fc(state)
         return self.critic(x)
 
     def eval_action(self, state, action):
         prob_dist, value = self.forward(state)
-        dist = torch.distributions.Categorical(prob_dist)
-        log_probs = dist.log_prob(action).view(-1, 1)
-        entropy = dist.entropy().mean()
+        distribution = torch.distributions.Categorical(prob_dist)
+
+        # Need to return log prob of distibution and entropy
+        log_probs = distribution.log_prob(action).view(-1, 1)
+        entropy = distribution.entropy().mean()
 
         return value, log_probs, entropy
 
@@ -177,12 +184,12 @@ class ActorBasic(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ActorBasic, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(in_channels[0], 128),
-            nn.Tanh(),
-            nn.Linear(128,64),
-            nn.Tanh(),
-            nn.Linear(64, out_channels),
-            nn.Softmax()
+            nn.Linear(in_channels[0], 100),
+            nn.ReLU,
+            nn.Linear(100,32),
+            nn.ReLU,
+            nn.Linear(32, out_channels),
+            nn.Softmax(dim=-1)
         )
 
     def forward(self, state):
@@ -193,11 +200,11 @@ class CriticBasic(nn.Module):
     def __init__(self, in_channels):
         super(CriticBasic, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(in_channels[0], 128),
+            nn.Linear(in_channels[0], 100),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(100, 32),
             nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(32, 1),
         )
 
     def forward(self, state):
@@ -205,11 +212,11 @@ class CriticBasic(nn.Module):
 
 
 class CriticAdvanced(nn.Module):
-    def __init__(self, input_shape, n_actions):
+    def __init__(self, in_channels, out_channels):
         super(CriticAdvanced, self).__init__()
 
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+        self.cnn = nn.Sequential(
+            nn.Conv2d(in_channels[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -217,21 +224,21 @@ class CriticAdvanced(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        cnn_out_size = self.cnn_out_size(in_channels)
+
         self.fc = nn.Sequential(
             # was 512
-            nn.Linear(conv_out_size, 100),
+            nn.Linear(cnn_out_size, 100),
             nn.ReLU(),
             nn.Linear(100, 1),
         )
 
-    def _get_conv_out(self, shape):
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
+    def cnn_out_size(self, in_channels):
+        # Send dummy input through cnn then find product of this output for output size
+        return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
     def forward(self, x):
-        conv_out = self.conv(x).view(x.size()[0], -1)
-        return self.fc(conv_out)
+        return self.fc(flatten(self.cnn(x)))
 
 
 class ActorAdvanced(nn.Module):
@@ -256,13 +263,12 @@ class ActorAdvanced(nn.Module):
             nn.Softmax(dim=-1)
         )
 
-    def _get_conv_out(self, shape):
-        o = self.conv(torch.zeros(1, *shape))
-        return int(np.prod(o.size()))
+    def cnn_out_size(self, in_channels):
+        # Send dummy input through cnn then find product of this output for output size
+        return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
     def forward(self, x):
-        conv_out = self.conv(x).view(x.size()[0], -1)
-        return self.fc(conv_out)
+        return self.fc(flatten(self.cnn(x)))
 
 
 

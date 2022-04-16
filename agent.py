@@ -11,8 +11,7 @@ class Agent:
     def step(self, env, approximate, model, epsilon, device, replay_mem, REPLAY_MIN):       
         if approximate:
             # No epsilon used
-            current_state_a = np.array([self.current_state], copy=False)
-            current_state_t = torch.tensor(current_state_a).to(device)
+            current_state_t = torch.tensor(self.current_state).unsqueeze(0).to(device)
             # Action probabilities
             action_probs, value = model(current_state_t)
             action_probs_n = action_probs.cpu().detach().numpy()
@@ -26,8 +25,7 @@ class Agent:
             if random <= epsilon or len(replay_mem) < REPLAY_MIN:
                 action = env.action_space.sample()
             else:
-                current_state_a = np.array([self.current_state], copy=False)
-                current_state_t = torch.tensor(current_state_a).to(device)
+                current_state_t = torch.tensor(self.current_state).unsqueeze(0).to(device)
                 _, action = torch.max(model(current_state_t), dim = 1)
                 action = int(action.item())
 

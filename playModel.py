@@ -9,14 +9,14 @@ from gym.wrappers import Monitor
 #Setup env and device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-env = envWrapper.makeEnv('SpaceInvaders-v4')
-#env = envWrapper.makeEnv('BreakoutNoFrameskip-v4')
+# env = envWrapper.makeEnv('SpaceInvaders-v4')
+env = envWrapper.makeEnv('BreakoutNoFrameskip-v4')
 env = Monitor(env, 'Videos', force=True)
 
 #Load Model
 #Select which model the network is built of.
 model = models.NeuralNetworkAdvanced(env.observation_space.shape, env.action_space.n).to(device)
-model.load_state_dict(torch.load('Models/dqnWeights'))
+model.load_state_dict(torch.load('Models/ddqnWeightsBreakout'))
 
 current_state = env.reset()
 count = 0

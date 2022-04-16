@@ -41,7 +41,6 @@ class DQN():
     now train with this. 
     '''
 
-    # TODO: alternate ways to calculate dqn
     def train_DQN(self):
         if len(self.replay_mem) < self.settings['REPLAY_MIN']:
             return False
@@ -60,7 +59,7 @@ class DQN():
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
         actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
-        dones_t = torch.ByteTensor(dones).to(self.device)
+        dones_t = torch.BoolTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
 
         # Now get predicted state action values for all states, 
@@ -171,40 +170,13 @@ class E_SARSA():
         state_t = torch.as_tensor(current_states, dtype=torch.float32).to(self.device)
         actions_t = torch.as_tensor(actions, dtype=torch.int64).unsqueeze(-1).to(self.device)
         rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
-        dones_t = torch.ByteTensor(dones).to(self.device)
+        dones_t = torch.BoolTensor(dones).to(self.device)
         fstate_t = torch.as_tensor(future_states, dtype=torch.float32).to(self.device)
 
         # This is predict
         state_action_qs = self.model(state_t).gather(1, actions_t).squeeze(-1)
 
         future_qs = self.targetModel(fstate_t)
-
-        # expected_q = np.zeros(future_qs.shape[0])
-        # max_future_qs = future_qs.max(1)[0].cpu().detach()
-        # greedy_actions = np.zeros(future_qs.shape[0])
-        #
-        # future_qs_num = future_qs.cpu().detach()
-        # future_qs_num_max = np.array(max_future_qs)
-        # for i in range(future_qs_num_max.shape[0]):
-        #     for j in range(self.env.action_space.n):
-        #         if future_qs_num[i][j] == future_qs_num_max[i]:
-        #             greedy_actions[i] += 1
-        #
-        # # Action probabilites
-        # non_greedy_action_probability = self.epsilon / self.env.action_space.n
-        # greedy_action_probability = ((1 - self.epsilon) /greedy_actions) + non_greedy_action_probability
-        #
-        # for i in range(future_qs_num_max.shape[0]):
-        #     for j in range(self.env.action_space.n):
-        #         if future_qs_num[i][j] == future_qs_num_max[i]:
-        #             expected_q[i] += future_qs_num[i][j] * greedy_action_probability[i]
-        #         else:
-        #             expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
-        #
-        # expected_q_t = torch.FloatTensor(expected_q).to(self.device)
-        #
-        # expected_q_t[dones_t] = 0.0
-        # targets = rewards_t + self.settings['DISCOUNT'] * expected_q_t
 
         expected_q = np.zeros(future_qs.shape[0])
         max_future_qs = torch.sort(future_qs, dim=1, descending=True)[0].cpu().detach()
@@ -223,8 +195,6 @@ class E_SARSA():
         # Action probabilites
         non_greedy_action_probability = self.epsilon / self.env.action_space.n
         greedy_action_probability = ((1 - self.epsilon) / greedy_actions) + non_greedy_action_probability
-        # greedy_action_probability = (1 - self.epsilon)
-        # non_greedy_action_probability = self.epsilon
 
         for i in range(future_qs_num.shape[0]):
             for j in range(self.env.action_space.n):
@@ -300,7 +270,7 @@ class REINFORCE:
         self.agent = agent.Agent(self.env)
         self.replay_mem = []
 
-    # TODO: Alternate methods for calculating reinforce method.
+
     def reinforce_train(self, model, discount_rewards):
         # Get individual transition from batched replay memory
         current_states = np.array([transition[0] for transition in self.batched_mem])
@@ -318,7 +288,7 @@ class REINFORCE:
 
         return True
 
-    # TODO: check calc discount
+
     def calc_discount(self, replay_mem):
         rewards = np.array([transition[2] for transition in replay_mem])
         discount_rewards = []
@@ -332,7 +302,7 @@ class REINFORCE:
 
         discount_rewards = np.array(discount_rewards).astype(np.float32)
         discount_rewards = (discount_rewards - discount_rewards.mean()) / (discount_rewards.std() + 1e-6)
-        # Baseline removing mean is added here along with dividing by discoutn rewards standard deviation
+        # Baseline removing mean is added here along with dividing by discount rewards standard deviation to provide normalization
 
         discount_rewards = torch.tensor(discount_rewards).to(self.device)
         return discount_rewards
@@ -392,7 +362,6 @@ class ActorCritic:
 
     def play(self):
         # Loop through epsiodes, every batch train
-        # TODO change up baselines for this and REINFORCE
         total_rewards = 0
 
         replay_mem = []
@@ -490,7 +459,7 @@ class WorkerA2C:
 
         # Find Q_Values with Discounted Rewards
         q_vals = np.zeros((len(rewards), 1))
-        q_val = self.ActorCritic.get_critic(fstates[-1])
+        q_val = self.ActorCritic.critic_val(fstates[-1])
         for i in reversed(range(len(rewards))):
             q_val = rewards[i] + self.settings['DISCOUNT'] * q_val * (1 - dones[i])
             q_vals[i] = q_val.cpu().detach().numpy()
@@ -500,7 +469,7 @@ class WorkerA2C:
     def play_sample(self, model, render):
         self.ActorCritic = model
         # Loop through epsiodes, every batch train
-        # TODO change up baselines for this and REINFORCE and discount calc
+
         total_rewards = 0
 
         replay_mem = []
@@ -553,8 +522,8 @@ class TrainA2C:
         self.entropy_sum = 0
         self.optimizer = optim
         self.device = device
-        self.entropy_coef = 0.01
-        self.value_coef = 0.5
+        self.entropy_coef = 0.4
+        self.value_coef = 0.2
 
     def play(self):
         workers_num = 8  # This could be a hyperparameter
@@ -591,7 +560,7 @@ class TrainA2C:
             self.train(values_t, actions_t, states_t)
 
     def train(self, values_t, actions_t, states_t):
-        # TODO Change this to try other loss algos
+        # TODO Change this loss algo, this currently does not work very well
 
         values_t = np.array(values_t)
         values_t = torch.as_tensor(values_t, dtype=torch.float32).to(self.device)
@@ -608,6 +577,6 @@ class TrainA2C:
 
         self.optimizer.zero_grad()
         total_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.ActorCritic.parameters(), 0.5)
+        torch.nn.utils.clip_grad_norm_(self.ActorCritic.parameters(), 0.7)
         self.optimizer.step()
 
