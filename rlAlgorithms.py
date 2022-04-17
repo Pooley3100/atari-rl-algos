@@ -180,30 +180,28 @@ class E_SARSA():
 
         expected_q = np.zeros(future_qs.shape[0])
         max_future_qs = torch.sort(future_qs, dim=1, descending=True)[0].cpu().detach()
-        greedy_actions = np.ones(future_qs.shape[0])
+        num_greedy_actions = np.ones(future_qs.shape[0])
 
         future_max_qs_num = np.array(max_future_qs)
         future_qs_num = future_qs.cpu().detach().numpy()
         for i in range(future_qs_num.shape[0]):
             col = 0
             while future_max_qs_num[i][col] == future_max_qs_num[i][col + 1]:
-                greedy_actions[i] += 1
+                num_greedy_actions[i] += 1
                 col += 1
                 if col >= self.env.action_space.n - 1:
                     break
 
         # Action probabilites
-        non_greedy_action_probability = self.epsilon / self.env.action_space.n
-        greedy_action_probability = ((1 - self.epsilon) / greedy_actions) + non_greedy_action_probability
+        non_greedy_probability = self.epsilon / self.env.action_space.n
+        greedy_probability = ((1 - self.epsilon) / num_greedy_actions) + non_greedy_probability
 
         for i in range(future_qs_num.shape[0]):
             for j in range(self.env.action_space.n):
                 if future_qs_num[i][j] == max_future_qs[i][0]:
-                    # test = future_qs_num[i][j] * greedy_action_probability
-                    # test1 = future_qs_num[i][j]
-                    expected_q[i] += future_qs_num[i][j] * greedy_action_probability[0]
+                    expected_q[i] += future_qs_num[i][j] * greedy_probability[i]
                 else:
-                    expected_q[i] += future_qs_num[i][j] * non_greedy_action_probability
+                    expected_q[i] += future_qs_num[i][j] * non_greedy_probability
 
         expected_q = torch.tensor(expected_q, dtype=torch.float32).to(self.device)
 
