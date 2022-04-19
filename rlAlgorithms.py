@@ -446,7 +446,7 @@ class WorkerA2C:
 
         self.env = gym.make(env_name)
 
-    def true_rewards(self, replay_mem):
+    def discount_rewards(self, replay_mem):
         q_vals = []
         rewards = np.array([transition[2] for transition in replay_mem])
         dones = np.array([transition[4] for transition in replay_mem])
@@ -506,7 +506,7 @@ class WorkerA2C:
                 ep_count += 1
                 end_reward = total_rewards
 
-        values = self.true_rewards(replay_mem)
+        values = self.discount_rewards(replay_mem)
         actions = ([transition[1] for transition in replay_mem])
         states = np.array([transition[0] for transition in replay_mem])
         return values, actions, states, end_reward
