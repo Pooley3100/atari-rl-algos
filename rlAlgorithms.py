@@ -425,7 +425,7 @@ class ActorCritic:
 
         # Now the loss equation = Total Loss = Action Loss + Value Loss - Entropy
         advantage = q_vals - values
-        value_loss = 0.5 * advantage.pow(2).mean()
+        value_loss = 0.5 * advantage.pow(2).mean() # MSE loss, multiplying by 0.5 as better option found on chris yoon.
         self.CriticOptim.zero_grad()
         value_loss.backward()
         self.CriticOptim.step()
