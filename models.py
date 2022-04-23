@@ -88,10 +88,10 @@ class PolicyNeuralNetworkAdvanced(nn.Module):
         cnn_out_size = self.cnn_out_size(in_channels)
 
         self.fc = nn.Sequential(
-            # was 512
-            nn.Linear(cnn_out_size, 100),
+            # was 100
+            nn.Linear(cnn_out_size, 512),
             nn.ReLU(),
-            nn.Linear(100, out_channels),
+            nn.Linear(512, out_channels),
             nn.Softmax(dim=-1)
         )
 
@@ -227,10 +227,10 @@ class CriticAdvanced(nn.Module):
         cnn_out_size = self.cnn_out_size(in_channels)
 
         self.fc = nn.Sequential(
-            # was 512
-            nn.Linear(cnn_out_size, 100),
+            # was 100
+            nn.Linear(cnn_out_size, 512),
             nn.ReLU(),
-            nn.Linear(100, 1),
+            nn.Linear(512, 1),
         )
 
     def cnn_out_size(self, in_channels):
@@ -256,10 +256,10 @@ class ActorAdvanced(nn.Module):
 
         conv_out_size = self._get_conv_out(input_shape)
         self.fc = nn.Sequential(
-            # was 512
-            nn.Linear(conv_out_size, 100),
+            # was 100
+            nn.Linear(conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(100, n_actions),
+            nn.Linear(512, n_actions),
             nn.Softmax(dim=-1)
         )
 
