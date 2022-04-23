@@ -13,7 +13,7 @@ with open("settings.json") as read_file:
 #env = make_atari_env('PongNoFrameskip-v4', n_envs=4, seed=0)
 #env = make_atari_env('BreakoutNoFrameskip-v4', n_envs=4, seed=0)
 env = make_atari_env('SpaceInvadersNoFrameskip-v4', n_envs=4, seed=0)
-env = VecFrameStack(env, n_stack=4)
+env = VecFrameStack(env, n_stack=1)
 # env = gym.make('LunarLander-v2')
 
 
