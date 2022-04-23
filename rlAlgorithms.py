@@ -490,16 +490,10 @@ class WorkerA2C:
 
             state = fstate
 
-            # values.append(value.cpu().detach().numpy()[0, 0])
             values.append(value)
-            # log_probs.append(torch.log(action_probs.squeeze(0))[action])
 
             # use this bit more for tensorboard
             total_rewards += reward
-
-            # action_prob = action_probs.cpu().detach().numpy()
-            # entropy = -np.sum(np.mean(action_prob) * np.log(action_prob))
-            # self.entropy_sum += entropy
 
             if done:
                 state = self.env.reset()
