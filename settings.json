@@ -2,10 +2,14 @@
     "MEMORY_SIZE": 50000,
     "REPLAY_MIN": 10000,
     "BATCH_SIZE": 32,
-    "LEARNING_RATE": 3e-4,
+    "LEARNING_RATE": 2e-4,
     "EPSILON_START": 1,
-    "EPSILON_END": 0.07,
+    "EPSILON_END": 0.08,
     "FINAL_EXPLORATION": 50000,
     "DISCOUNT": 0.99,
-    "TARGET_UPDATE": 2500
+    "TARGET_UPDATE": 4000,
+    "rlOption": 1,
+    "Model": "Advanced",
+    "ddqn": false,
+    "Game": 1
 }

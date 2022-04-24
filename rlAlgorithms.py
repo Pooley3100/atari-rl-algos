@@ -300,7 +300,7 @@ class REINFORCE:
 
         discount_rewards = np.array(discount_rewards).astype(np.float32)
         discount_rewards = (discount_rewards - discount_rewards.mean()) / (discount_rewards.std() + 1e-6)
-        # Baseline removing mean is added here along with dividing by discount rewards standard deviation to provide normalization
+        # Baseline removing mean is added here along with dividing by discount rewards standard deviation to provide normalization, std deviation reference from chris yoon article.
 
         discount_rewards = torch.tensor(discount_rewards).to(self.device)
         return discount_rewards
@@ -347,10 +347,12 @@ class REINFORCE:
 
 class ActorCritic:
     def __init__(self, env, settings, device, in_channels, out_channels):
-        # self.Actor = models.ActorBasic(in_channels, out_channels).to(device)
-        # self.Critic = models.CriticBasic(in_channels).to(device)
-        self.Actor = models.ActorAdvanced(in_channels, out_channels).to(device)
-        self.Critic = models.CriticAdvanced(in_channels, out_channels).to(device)
+        if settings['Model'] == 'Basic':
+            self.Actor = models.ActorBasic(in_channels, out_channels).to(device)
+            self.Critic = models.CriticBasic(in_channels).to(device)
+        else:
+            self.Actor = models.ActorAdvanced(in_channels, out_channels).to(device)
+            self.Critic = models.CriticAdvanced(in_channels, out_channels).to(device)
         self.env = env
         self.settings = settings
         self.agent = agent.Agent(self.env)
