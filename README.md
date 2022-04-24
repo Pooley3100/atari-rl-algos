@@ -17,7 +17,7 @@ All options for testing are changed within settings.json file
   - 2 is Expected SARSA
   - 3 is REINFORCE
   - 4 is Actor Critic
-  - 5 is A2C
+  - 5 is A2C (note: this one does not perform correctly)
   
 ### To change game, change 'Game' variable:
   - 1 is Pong
