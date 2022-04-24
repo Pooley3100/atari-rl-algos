@@ -2,8 +2,9 @@
 Testing Deep RL Algorithms with Atari Games
 
 ## To Install:
-Create Venv and pip install requirements.tx. <p>
-(if using testStable.py file, install requirementsStable.txt)
+1. Create Virtual environment
+2. pip install -r requirements.txt <p>
+(if using testStable.py file, install requirementsStable.txt) </p>
 
 ## To run:
 Run main.py
@@ -11,14 +12,14 @@ Run main.py
 ## Options:
 All options for testing are changed within settings.json file
 
-### To change algorithm change rlOption from 1-5
-  - 1 is DQN
+### To change algorithm change 'rlOption' from 1-5
+  - 1 is DQN (set 'ddqn' variable to either true or false for Double DQN).
   - 2 is Expected SARSA
   - 3 is REINFORCE
   - 4 is Actor Critic
   - 5 is A2C
   
-### To change game, change Game variable:
+### To change game, change 'Game' variable:
   - 1 is Pong
   - 2 is Breakout
   - 3 is Space Invaders
