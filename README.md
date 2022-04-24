@@ -10,8 +10,9 @@ Pong             |  Breakout
 </div>
 
 ## To Install:
-1. Create Virtual environment
-2. pip install -r requirements.txt <p>
+1. git clone repo
+2. Create virtual environment
+3. pip install -r requirements.txt <p>
 (if using testStable.py file, install requirementsStable.txt) </p>
 
 ## To run:
