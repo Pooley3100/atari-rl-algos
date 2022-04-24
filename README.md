@@ -24,7 +24,7 @@ All options for testing are changed within <b> settings.json </b> file
   - 1 is DQN (set 'ddqn' variable to either true or false for Double DQN).
   - 2 is Expected SARSA
   - 3 is REINFORCE
-  - 4 is Actor Critic
+  - 4 is Vanilla Actor Critic
   - 5 is A2C (note: this one does not perform correctly)
   
 ### To change game, change 'Game' variable:
