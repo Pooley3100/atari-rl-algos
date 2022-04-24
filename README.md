@@ -39,4 +39,4 @@ All options for testing are changed within <b> settings.json </b> file
 
 ## Results:
 - Run plot.py to then visualize test run. 
-- playModel.py can also be used to use trained model weights, this must be selected however in the file.
+- playModel.py can also be used to play trained model weights, this must be selected however in the playModel file.
