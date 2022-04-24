@@ -1,5 +1,5 @@
-# atari-rl-algos
-Testing Deep RL Algorithms with Atari Games
+# Deep Reinforcement Learning Algorithms
+Testing Deep RL Algorithms with Lunar Lander and Atari Games.
 
 ## To Install:
 1. Create Virtual environment
