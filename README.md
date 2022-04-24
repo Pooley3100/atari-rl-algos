@@ -1,6 +1,14 @@
 # Deep Reinforcement Learning Algorithms
 Testing Deep RL Algorithms with Lunar Lander and Atari Games.
 
+<div align="center">
+
+Pong             |  Breakout
+:-------------------------:|:-------------------------:
+![ezgif com-gif-maker (1)](https://user-images.githubusercontent.com/17604361/164995461-84e22057-5e8b-42a8-8da8-3d25c0ac22af.gif) |  ![ezgif com-gif-maker](https://user-images.githubusercontent.com/17604361/164995473-dfea1d8b-59ca-4a84-af8f-b05d13697dc8.gif)
+  
+</div>
+
 ## To Install:
 1. Create Virtual environment
 2. pip install -r requirements.txt <p>
