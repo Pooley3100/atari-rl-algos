@@ -10,7 +10,7 @@ Testing Deep RL Algorithms with Atari Games
 Run main.py
 
 ## Options:
-All options for testing are changed within settings.json file
+All options for testing are changed within <b> settings.json </b> file
 
 ### To change algorithm change 'rlOption' from 1-5
   - 1 is DQN (set 'ddqn' variable to either true or false for Double DQN).
