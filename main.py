@@ -124,12 +124,12 @@ elif rlOption == 4:
 
 elif rlOption == 5:
     # A2C
-    print('Training A2C in {0}'.format(env_name))
-    print('Note: Does not require optimal results')
+    print('Training A2C in {0}'.format(lunar_lander))
+    print('Note: Does not acquire optimal results')
     if settings['Model'] == 'Basic':
         model = models.ActorCriticNetworkBasic(in_channels, out_channels).to(device)
     else:
-        model = models.ActorCriticNetwork(in_channels, out_channels).to(device)
+        model = models.ActorCriticNetworkBasic(in_channels, out_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=settings['LEARNING_RATE'])
     a2c = rlAlgorithms.TrainA2C(model, settings, optimizer, device, lunar_lander)
 

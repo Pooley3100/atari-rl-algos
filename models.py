@@ -130,6 +130,12 @@ class ActorCriticNetwork(nn.Module):
         # Send dummy input through cnn then find product of this output for output size
         return int(np.prod(self.cnn(torch.ones(in_channels).unsqueeze(0)).size()))
 
+    def get_values(self, state):
+        x = flatten(self.cnn(state))
+        value = self.critc(x)
+
+        return value
+
     def forward(self, state):
         x = flatten(self.cnn(state))
 
@@ -165,19 +171,11 @@ class ActorCriticNetworkBasic(nn.Module):
 
         return prob_dist, value
 
-    def critic_val(self, state):
-        x = self.fc(state)
-        return self.critic(x)
+    def get_values(self, state):
+        x = self.fc((state))
+        value = self.critic(x)
 
-    def eval_action(self, state, action):
-        prob_dist, value = self.forward(state)
-        distribution = torch.distributions.Categorical(prob_dist)
-
-        # Need to return log prob of distibution and entropy
-        log_probs = distribution.log_prob(action).view(-1, 1)
-        entropy = distribution.entropy().mean()
-
-        return value, log_probs, entropy
+        return value
 
 
 class ActorBasic(nn.Module):
@@ -186,7 +184,7 @@ class ActorBasic(nn.Module):
         self.model = nn.Sequential(
             nn.Linear(in_channels[0], 100),
             nn.ReLU,
-            nn.Linear(100,32),
+            nn.Linear(100, 32),
             nn.ReLU,
             nn.Linear(32, out_channels),
             nn.Softmax(dim=-1)
