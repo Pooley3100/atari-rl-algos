@@ -128,4 +128,3 @@ def makeEnv(ENV_NAME):
     env = BufferWrapper(env, 4)
     env = ScaledFloatFrame(env)
     return env
-# EMD OF WRAPPER FROM ARTICLE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
